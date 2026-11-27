@@ -39,54 +39,7 @@ jobs:
         run: |
           mkdir -p "$HOME/.android"
           base64 -d << 'KS_EOF' > "$HOME/.android/debug.keystore"
-          MIIKdgIBAzCCCiAGCSqGSIb3DQEHAaCCChEEggoNMIIKCTCCBcAGCSqGSIb3DQEHAaCCBbEEggWt
-          MIIFqTCCBaUGCyqGSIb3DQEMCgECoIIFQDCCBTwwZgYJKoZIhvcNAQUNMFkwOAYJKoZIhvcNAQUM
-          MCsEFPe++LqUwWXFXCPVAFZAP7U3pkRmAgInEAIBIDAMBggqhkiG9w0CCQUAMB0GCWCGSAFlAwQB
-          KgQQs7ZNDMZaA8l03PjSQDd4pQSCBND3Z7pWY1O4ILTPMrnbyMsMrm2yNbqu7WISde8HioqnflqO
-          F7E/6pVpW5qRQ2AJigjd/S89IQ5ts2zj4SohQzPT8gZUFGNMxx+xySbSqiYRafKC4TW+nYWJykaT
-          gv/xFDLKKtjsaiQ9aIPSmnOvGUeAWcAja3bUuZP7vtd74zwt3MJi6PxQBQxlgPcYwFrYA9SSMsrR
-          HP+66QK0IEnOeE2MV0np1ugOXELnTdZj2EqGIqkY1UkmUNI6ub6a08x7GEfGidsY63+8rxwpVcdv
-          UPqBPQLCUHQHs9rrEhOxKqtzP56wNLs88n37//wUsGk1EaDpFNIiJZt1XysIXskm7NJmbzYo3Ybj
-          RQW7lnO+Jc+V5yeJ3jKFiC3mOH1141+lm85uEzZ2Orsa3m0HNqqOYYeNDaPYdFFufE07a5AV+lUh
-          phXdcLffIq1FxILSOSbVrzYgu6MF/UJ64VR+wUs5oNzu/3W+oUhs9XGHNOF9TkIDc/YlGEfFI8D4
-          Ej/BaXRQ83a0PVEfXG71Qx2BTJQB7SjThkteKYbJIUB1gOwMWu6plUrXZ/VUK1MWLCQ5uaDGL9TH
-          ys34nSI/AvUmh7qPmQituK7WNq9XnlwxYSukqfz/9qQ4XMQGGcuQxZ30l6smPx0JHcxMDmlfaDtL
-          tvzlikjvrDBfkI1F+0ZBozcomxGaCzxg4a9T56gLcU7STLRazUvhAoODLB/G7Ucnr1evI+Opr1k2
-          E3GcSzToQ+BoO4p7HpsLu9fcabTqEBrbKN6B9VeSCUKbEgTU7kYTbmEQKdnv4WluFchGw7NXGzF/
-          rQVHHauFlVj/FCZERoFTdA4x81yAV4nbKnndRQPcTrpbKBpcEP1E9FMDmBwxnjvhM4AnStqNAFhg
-          AGSD8Th5evRy1Osf/DH4hTvasVvhSsIo5BKO+VrWEfFl1WrXDnVGg6inlfuiI12qWo8w+w43h98L
-          wrVyqPaky/p2Cw74uTWlaOOjTj6B9JO7mvk4aVdznmK4lka5jxmz4kCbvasdW1VXaqkCEel12dUy
-          OpPEKoAYQabg89iXwr46xBvS22ST4PfUQb73t7WvtHY98nCsXcAMdxMlMy28BCRueKIHR5wBdvDH
-          chnUkAaloaYwqrI8+jaf2vHQURwe2brHO8y3nmsDuGJjp+EcgL+OrYCW2+ODJ+7a45cdgKTjrCg8
-          /PxEWrr1i+YlYxYcRPfop4BVnuRrC8GmAAI4EI0TRDeu0L1wNu/fnIXbM+J9FjavgdIQtKtyPoOw
-          To/BnvfMbm8aPHB3KG0uBW3c6zGz7mGNF2PH1ljsqfu/O7Z8UD+pK6QTC3Xa0zjraUsqNaJH6y2A
-          hYY3N7puWnxTsryvAb2OxcMc2DIvpH3eqOfp0va2pEi/VrJ+0SycdvCXdVJnntz+LjeR82Fm9NYq
-          effpq2xg25j7RftBsSTYje6I7eBXA9KcRzzaHvWaCru4lpVXTzUmjQTG0qtglw6w8WZEky6H2qmL
-          x0iWqKqA2bzv7MfbNFpxwrkAJuQF8fG6YOVe/g1rczGMjmHCeA53UQ4Wm1MDzj4YBEQl54nhL5s6
-          1HxNpeI0wUdcGh+dO6lsvUzN/0S1SLoC5ECtIyqpLb8UEfVITGud6SZqgl2uasX3VSmrrqvet83g
-          GDFSMC0GCSqGSIb3DQEJFDEgHh4AYQBuAGQAcgBvAGkAZABkAGUAYgB1AGcAawBlAHkwIQYJKoZI
-          hvcNAQkVMRQEElRpbWUgMTc5NTc3NjA4Mjg5MDCCBEEGCSqGSIb3DQEHBqCCBDIwggQuAgEAMIIE
-          JwYJKoZIhvcNAQcBMGYGCSqGSIb3DQEFDTBZMDgGCSqGSIb3DQEFDDArBBTSPgqP2SzjfEFK1W33
-          6KE95rns+wICJxACASAwDAYIKoZIhvcNAgkFADAdBglghkgBZQMEASoEENSxkDW42V8gsRwthpvh
-          9zqAggOw2TvY1ad1Wmgba1M7TOoHoCnntTcE1e1go6g+8seagHzcZrEvvUTFf2NOx4qGxhkRxMry
-          nLWYxIcWBJPJ+MUhHDX7mWa/Z6m4ESJHhC/7M/wxLaIFJX0MGvEtGyIehXrAJvp1OPduG0wv0q6z
-          wJHEJHTzZGmqiCww6b+rumQs+p7CEdBa3eXDTgaH8y6OfNEpUahJeCp2nqiqSRHEhfcwYeVk8chM
-          oolf+41WL2Xny/QcRGib0WRo7FInsSYBtm41GuPHYBQ6tiSjsHFUlkRHayckeQkLw6O4fo6CLCbp
-          dQp5EcXr6qpcn+bQAOafXx3w38DWhA9sZB/6ZxeyfMjZ7Eglmq72M4jN1Yvn0EWCSIxSTye4N7Wm
-          rsfZ4uwtqRJtxk7lw3QZXNKIJPINtpep3V3+MfVtfyjMJkWgsHJQR7RGh/c4scTLCmBIWdnkRyAB
-          SQB7vExcu6s71TGr03ImBPCvGW/DNgs1WUPG6MuhJ3aKB/JXDY4bsSFGkteylcVb26sEgkpyDim1
-          Z3xoR+YFsV8k9cmQDJAmnUVELEz7H94Dl+KWOjFxo10/lDxsFKq4j6Mt7tQZVxJl0O6FBU8jSApJ
-          eQJrlqGmVa2yNljSwxOXlqMFee2krW3QAEqNLgNqteYCvwxTTnlswMzk9aDACA/G2nYUabOboSl+
-          1rNiOaMFkfvJ9+G9aUOZaF9IKxO7p3/AFa/4urpowWUtgrr9oycRl+Bwcy5Ykt1+9YKaE8JNvTqh
-          Hg8TFFEnsOgQ32rGEbYl+sEhT1bxAFNQivfm1KSQslp9Uh91d4DL9pSFnW2qaAoi5FmavGOzf9x0
-          OHMabF8JcQt77o+Tumh4a+fwQLnzhhWCGkimz645WHj0uR+rVfwt5ZrJN8KG13I8rW1SZNZi+BRI
-          z8NsfzfFBPvnqyeiEWFNwqVzHTWOQmd/ILOdz9jyOpjav4AznhPpz4XnDzKU4nqtjFaGFKBaeUzQ
-          DrAU/ISEPqdm8wHaii7F6ZfWuBrwY4dyLci4C0J95kWSrMBjIzDIgi/oJ5XprLlqQ24coqRLNhnx
-          b3y/flrVFjdEXJ3LpqaQ0MIXPLfO1orHMrfTw38l6bJ4+5SYOhrljBxHNdlVGOyZx4HbDAw8GzW1
-          SySIxbYjyVFIsQGtvDCLSDWQdbeyeMW9ElV9Cr33IOOEF89LQ1dnDg+OEPNTZ59MBwUlCgzU1IFY
-          6bA7zVeAiOE+HngVJ2OVb5HrOtr6as2pKuyNK24bxEcfXday4i0wTTAxMA0GCWCGSAFlAwQCAQUA
-          BCDixG1rJ6rSBWVr73lbaQf33zwZ+bjPXtdEUdMivZlZbQQUoLabAcT6t6ais6AKAmRTbI9nNeUC
-          AicQ
+          MIIKdgIBAzCCCiAGCSqGSIb3DQEHAaCCChEEggoNMIIKCTCCBcAGCSqGSIb3DQEHAaCCBbEEggWtMIIFqTCCBaUGCyqGSIb3DQEMCgECoIIFQDCCBTwwZgYJKoZIhvcNAQUNMFkwOAYJKoZIhvcNAQUMMCsEFPe++LqUwWXFXCPVAFZAP7U3pkRmAgInEAIBIDAMBggqhkiG9w0CCQUAMB0GCWCGSAFlAwQBKgQQs7ZNDMZaA8l03PjSQDd4pQSCBND3Z7pWY1O4ILTPMrnbyMsMrm2yNbqu7WISde8HioqnflqOF7E/6pVpW5qRQ2AJigjd/S89IQ5ts2zj4SohQzPT8gZUFGNMxx+xySbSqiYRafKC4TW+nYWJykaTgv/xFDLKKtjsaiQ9aIPSmnOvGUeAWcAja3bUuZP7vtd74zwt3MJi6PxQBQxlgPcYwFrYA9SSMsrRHP+66QK0IEnOeE2MV0np1ugOXELnTdZj2EqGIqkY1UkmUNI6ub6a08x7GEfGidsY63+8rxwpVcdvUPqBPQLCUHQHs9rrEhOxKqtzP56wNLs88n37//wUsGk1EaDpFNIiJZt1XysIXskm7NJmbzYo3YbjRQW7lnO+Jc+V5yeJ3jKFiC3mOH1141+lm85uEzZ2Orsa3m0HNqqOYYeNDaPYdFFufE07a5AV+lUhphXdcLffIq1FxILSOSbVrzYgu6MF/UJ64VR+wUs5oNzu/3W+oUhs9XGHNOF9TkIDc/YlGEfFI8D4Ej/BaXRQ83a0PVEfXG71Qx2BTJQB7SjThkteKYbJIUB1gOwMWu6plUrXZ/VUK1MWLCQ5uaDGL9THys34nSI/AvUmh7qPmQituK7WNq9XnlwxYSukqfz/9qQ4XMQGGcuQxZ30l6smPx0JHcxMDmlfaDtLtvzlikjvrDBfkI1F+0ZBozcomxGaCzxg4a9T56gLcU7STLRazUvhAoODLB/G7Ucnr1evI+Opr1k2E3GcSzToQ+BoO4p7HpsLu9fcabTqEBrbKN6B9VeSCUKbEgTU7kYTbmEQKdnv4WluFchGw7NXGzF/rQVHHauFlVj/FCZERoFTdA4x81yAV4nbKnndRQPcTrpbKBpcEP1E9FMDmBwxnjvhM4AnStqNAFhgAGSD8Th5evRy1Osf/DH4hTvasVvhSsIo5BKO+VrWEfFl1WrXDnVGg6inlfuiI12qWo8w+w43h98LwrVyqPaky/p2Cw74uTWlaOOjTj6B9JO7mvk4aVdznmK4lka5jxmz4kCbvasdW1VXaqkCEel12dUyOpPEKoAYQabg89iXwr46xBvS22ST4PfUQb73t7WvtHY98nCsXcAMdxMlMy28BCRueKIHR5wBdvDHchnUkAaloaYwqrI8+jaf2vHQURwe2brHO8y3nmsDuGJjp+EcgL+OrYCW2+ODJ+7a45cdgKTjrCg8/PxEWrr1i+YlYxYcRPfop4BVnuRrC8GmAAI4EI0TRDeu0L1wNu/fnIXbM+J9FjavgdIQtKtyPoOwTo/BnvfMbm8aPHB3KG0uBW3c6zGz7mGNF2PH1ljsqfu/O7Z8UD+pK6QTC3Xa0zjraUsqNaJH6y2AhYY3N7puWnxTsryvAb2OxcMc2DIvpH3eqOfp0va2pEi/VrJ+0SycdvCXdVJnntz+LjeR82Fm9NYqeffpq2xg25j7RftBsSTYje6I7eBXA9KcRzzaHvWaCru4lpVXTzUmjQTG0qtglw6w8WZEky6H2qmLx0iWqKqA2bzv7MfbNFpxwrkAJuQF8fG6YOVe/g1rczGMjmHCeA53UQ4Wm1MDzj4YBEQl54nhL5s61HxNpeI0wUdcGh+dO6lsvUzN/0S1SLoC5ECtIyqpLb8UEfVITGud6SZqgl2uasX3VSmrrqvet83gGDFSMC0GCSqGSIb3DQEJFDEgHh4AYQBuAGQAcgBvAGkAZABkAGUAYgB1AGcAawBlAHkwIQYJKoZIhvcNAQkVMRQEElRpbWUgMTc5NTc3NjA4Mjg5MDCCBEEGCSqGSIb3DQEHBqCCBDIwggQuAgEAMIIEJwYJKoZIhvcNAQcBMGYGCSqGSIb3DQEFDTBZMDgGCSqGSIb3DQEFDDArBBTSPgqP2SzjfEFK1W336KE95rns+wICJxACASAwDAYIKoZIhvcNAgkFADAdBglghkgBZQMEASoEENSxkDW42V8gsRwthpvh9zqAggOw2TvY1ad1Wmgba1M7TOoHoCnntTcE1e1go6g+8seagHzcZrEvvUTFf2NOx4qGxhkRxMrynLWYxIcWBJPJ+MUhHDX7mWa/Z6m4ESJHhC/7M/wxLaIFJX0MGvEtGyIehXrAJvp1OPduG0wv0q6zwJHEJHTzZGmqiCww6b+rumQs+p7CEdBa3eXDTgaH8y6OfNEpUahJeCp2nqiqSRHEhfcwYeVk8chMoolf+41WL2Xny/QcRGib0WRo7FInsSYBtm41GuPHYBQ6tiSjsHFUlkRHayckeQkLw6O4fo6CLCbpdQp5EcXr6qpcn+bQAOafXx3w38DWhA9sZB/6ZxeyfMjZ7Eglmq72M4jN1Yvn0EWCSIxSTye4N7WmrsfZ4uwtqRJtxk7lw3QZXNKIJPINtpep3V3+MfVtfyjMJkWgsHJQR7RGh/c4scTLCmBIWdnkRyABSQB7vExcu6s71TGr03ImBPCvGW/DNgs1WUPG6MuhJ3aKB/JXDY4bsSFGkteylcVb26sEgkpyDim1Z3xoR+YFsV8k9cmQDJAmnUVELEz7H94Dl+KWOjFxo10/lDxsFKq4j6Mt7tQZVxJl0O6FBU8jSApJeQJrlqGmVa2yNljSwxOXlqMFee2krW3QAEqNLgNqteYCvwxTTnlswMzk9aDACA/G2nYUabOboSl+1rNiOaMFkfvJ9+G9aUOZaF9IKxO7p3/AFa/4urpowWUtgrr9oycRl+Bwcy5Ykt1+9YKaE8JNvTqhHg8TFFEnsOgQ32rGEbYl+sEhT1bxAFNQivfm1KSQslp9Uh91d4DL9pSFnW2qaAoi5FmavGOzf9x0OHMabF8JcQt77o+Tumh4a+fwQLnzhhWCGkimz645WHj0uR+rVfwt5ZrJN8KG13I8rW1SZNZi+BRIz8NsfzfFBPvnqyeiEWFNwqVzHTWOQmd/ILOdz9jyOpjav4AznhPpz4XnDzKU4nqtjFaGFKBaeUzQDrAU/ISEPqdm8wHaii7F6ZfWuBrwY4dyLci4C0J95kWSrMBjIzDIgi/oJ5XprLlqQ24coqRLNhnxb3y/flrVFjdEXJ3LpqaQ0MIXPLfO1orHMrfTw38l6bJ4+5SYOhrljBxHNdlVGOyZx4HbDAw8GzW1SySIxbYjyVFIsQGtvDCLSDWQdbeyeMW9ElV9Cr33IOOEF89LQ1dnDg+OEPNTZ59MBwUlCgzU1IFY6bA7zVeAiOE+HngVJ2OVb5HrOtr6as2pKuyNK24bxEcfXday4i0wTTAxMA0GCWCGSAFlAwQCAQUABCDixG1rJ6rSBWVr73lbaQf33zwZ+bjPXtdEUdMivZlZbQQUoLabAcT6t6ais6AKAmRTbI9nNeUCAicQ
           KS_EOF
           ls -lh "$HOME/.android/debug.keystore"
 
@@ -98,15 +51,17 @@ jobs:
 
           cmake = Path("app/src/main/cpp/CMakeLists.txt")
           s = cmake.read_text(encoding="utf-8")
-          turbo_block = '''
+          turbo_block = """
           # === Snapdragon 8 Elite (SM8750) Turbo Optimization ===
+          set(CMAKE_BUILD_TYPE "Release" CACHE STRING "" FORCE)
           set(CMAKE_C_FLAGS_DEBUG "-O3 -DNDEBUG -march=armv8.2-a+dotprod+fp16+i8mm" CACHE STRING "" FORCE)
           set(CMAKE_CXX_FLAGS_DEBUG "-O3 -DNDEBUG -march=armv8.2-a+dotprod+fp16+i8mm" CACHE STRING "" FORCE)
           set(CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG -march=armv8.2-a+dotprod+fp16+i8mm" CACHE STRING "" FORCE)
           set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -march=armv8.2-a+dotprod+fp16+i8mm" CACHE STRING "" FORCE)
+          add_compile_definitions(NDEBUG)
           add_compile_options(-O3 -DNDEBUG -march=armv8.2-a+dotprod+fp16+i8mm)
           add_link_options(-Wl,-z,max-page-size=16384)
-          '''
+          """
           if "Snapdragon 8 Elite (SM8750) Turbo Optimization" not in s:
               m = re.search(r'^project\s*\([^\n]*\)\s*$', s, re.M)
               if not m:
@@ -115,10 +70,10 @@ jobs:
               pos = m.end()
               s = s[:pos] + "\n" + turbo_block + "\n" + s[pos:]
               cmake.write_text(s, encoding="utf-8")
-              print("CMakeLists.txt patched!")
+              print("CMakeLists.txt patched with Release + SM8750 SIMD!")
           PY
 
-      - name: Inject AudioImporter + Unlimited Context + Multi-Model Upgrade
+      - name: Inject AudioImporter + Anti-Runaway Unlimited Chunking + Multi-Model Upgrade
         run: |
           cat << 'EOF' > app/src/main/java/com/qwen/tts/android/data/AudioImporter.kt
           package com.qwen.tts.android.data
@@ -342,12 +297,40 @@ jobs:
           EOF
 
           python3 - << 'PY'
+          import re
           from pathlib import Path
+
+          # 1. Inspect QwenEngine.kt to detect exact NativeParams fields (e.g. maxAudioTokens, repetitionPenalty)
+          engine_path = Path("app/src/main/java/com/qwen/tts/studio/engine/QwenEngine.kt")
+          engine_src = engine_path.read_text(encoding="utf-8")
+          m_np = re.search(r"data\s+class\s+NativeParams\s*\(([^)]*)\)", engine_src, re.S)
+          np_body = m_np.group(1) if m_np else ""
+          print("=== Detected NativeParams ===")
+          print(np_body)
+
+          m_tok = re.search(r"\b(max[A-Za-z0-9_]*(?:Token|Frame|Step|Len)[A-Za-z0-9_]*)\s*:\s*Int\b", np_body, re.I)
+          max_tok_field = m_tok.group(1) if m_tok else None
+
+          m_rep = re.search(r"\b(rep[A-Za-z0-9_]*Penalty)\s*:\s*(Float|Double)\b", np_body, re.I)
+          rep_pen_field = m_rep.group(1) if m_rep else None
+          rep_pen_type = m_rep.group(2) if m_rep else None
+
+          print(f"Detected max_tok_field={max_tok_field}, rep_pen_field={rep_pen_field} ({rep_pen_type})")
+
+          np_args = ["languageId = _uiState.value.selectedLanguageId"]
+          if max_tok_field:
+              np_args.append(f"{max_tok_field} = tokenCap")
+          if rep_pen_field:
+              val_expr = "repPenalty.toDouble()" if rep_pen_type == "Double" else "repPenalty"
+              np_args.append(f"{rep_pen_field} = {val_expr}")
+          native_params_expr = "QwenEngine.NativeParams(" + ", ".join(np_args) + ")"
+
+          # 2. Patch MainActivity.kt
           p = Path("app/src/main/java/com/qwen/tts/android/MainActivity.kt")
           s = p.read_text(encoding="utf-8")
 
           old_variants = "    val variants = listOf(defaultVariant)"
-          new_variants = '''    val q8Variant: ModelVariant = variant(
+          new_variants = """    val q8Variant: ModelVariant = variant(
               id = "q8_0",
               label = "0.6B Q8",
               displayName = "Qwen3-TTS 0.6B Q8_0 (高音质推荐)",
@@ -367,7 +350,7 @@ jobs:
               tokenizerSizeBytes = 254_974_752L,
           )
 
-          val variants = listOf(defaultVariant, q8Variant, talker17bQ4Variant)'''
+          val variants = listOf(defaultVariant, q8Variant, talker17bQ4Variant)"""
           assert old_variants in s, "variants anchor missing"
           s = s.replace(old_variants, new_variants, 1)
 
@@ -382,7 +365,7 @@ jobs:
           s = s.replace(old_model_panel, new_model_panel, 1)
 
           old_model_dl = "            if (state.downloading) {"
-          model_chips = '''            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+          model_chips = """            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                           QwenModel.variants.forEach { v ->
                               FilterChip(
                                   selected = state.selectedModelId == v.id,
@@ -393,7 +376,7 @@ jobs:
                           }
                       }
 
-                      if (state.downloading) {'''
+                      if (state.downloading) {"""
           assert old_model_dl in s, "ModelPanel downloading anchor missing"
           s = s.replace(old_model_dl, model_chips, 1)
 
@@ -403,7 +386,7 @@ jobs:
 
           synth_start = s.index("    fun synthesize() {")
           synth_end = s.index("    fun startVoiceRecording() {")
-          new_synth = '''    fun synthesize() {
+          new_synth = """    fun synthesize() {
               val text = _uiState.value.text.trim()
               if (text.isEmpty() || _uiState.value.busy) return
               viewModelScope.launch {
@@ -411,7 +394,7 @@ jobs:
                   val selectedVoice = _uiState.value.selectedVoiceId?.let { id -> voices.value.firstOrNull { it.voiceId == id } }
                   val chunks = splitLongTextUnlimited(text)
                   val estimate = estimateSynthesisMillis(text)
-                  startBusy(status = "Synthesizing (${chunks.size} chunks)", resetSynthesis = true, synthesisEstimate = estimate)
+                  startBusy(status = "共 ${chunks.size} 段 · 准备生成", resetSynthesis = true, synthesisEstimate = estimate)
 
                   val result = runCatching {
                       withContext(Dispatchers.IO) {
@@ -421,32 +404,57 @@ jobs:
                           var totalMs = 0L
                           var completedFrames = 0
 
+                          fun synthOnePiece(piece: String, label: String, repPenalty: Float): Pair<FloatArray, Int> {
+                              val tokenCap = computeSafeMaxAudioTokens(piece)
+                              val baseFrames = completedFrames
+                              var peakFrames = 0
+                              native.setProgressCallback { frames, maxTokens ->
+                                  if (frames > peakFrames) peakFrames = frames
+                                  _uiState.update {
+                                      it.copy(
+                                          loaded = true,
+                                          status = "$label (上限 ${tokenCap}帧)",
+                                          synthesisFrames = baseFrames + frames,
+                                          maxAudioTokens = maxTokens.coerceAtMost(tokenCap),
+                                      )
+                                  }
+                              }
+                              val nativeResult = native.synthesize(
+                                  text = piece,
+                                  speakerEmbeddingPath = selectedVoice?.speakerEmbeddingPath,
+                                  params = __NATIVE_PARAMS_EXPR__,
+                              )
+                              if (!nativeResult.success || nativeResult.audio == null) {
+                                  error(nativeResult.errorMsg ?: "$label synthesis failed")
+                              }
+                              sampleRate = nativeResult.sampleRate.takeIf { it > 0 } ?: sampleRate
+                              totalMs += nativeResult.timeMs
+                              val outFrames = (nativeResult.audio.size.toDouble() / sampleRate.toDouble() / 0.08).toInt()
+                              return Pair(nativeResult.audio, maxOf(peakFrames, outFrames))
+                          }
+
                           try {
                               for (idx in chunks.indices) {
                                   val chunkText = chunks[idx]
-                                  val baseFrames = completedFrames
-                                  native.setProgressCallback { frames, maxTokens ->
-                                      _uiState.update {
-                                          it.copy(
-                                              loaded = true,
-                                              status = "Chunk ${idx + 1}/${chunks.size}",
-                                              synthesisFrames = baseFrames + frames,
-                                              maxAudioTokens = maxTokens,
-                                          )
+                                  val label = "第 ${idx + 1}/${chunks.size} 段"
+                                  val tokenCap = computeSafeMaxAudioTokens(chunkText)
+                                  val (audio, usedFrames) = synthOnePiece(chunkText, label, 1.12f)
+                                  // Anti-runaway guard: if model hit the token ceiling without EOS and chunk is splittable, split in half and retry once
+                                  if (usedFrames >= tokenCap - 3 && chunkText.length > 14) {
+                                      val mid = chunkText.length / 2
+                                      val part1 = chunkText.substring(0, mid).trim()
+                                      val part2 = chunkText.substring(mid).trim()
+                                      if (part1.isNotEmpty() && part2.isNotEmpty()) {
+                                          val (a1, _) = synthOnePiece(part1, "$label-重试A", 1.18f)
+                                          val (a2, _) = synthOnePiece(part2, "$label-重试B", 1.18f)
+                                          val combined = mergeAudioChunksSmoothly(listOf(a1, a2), sampleRate)
+                                          completedFrames += (combined.size.toDouble() / sampleRate.toDouble() / 0.08).toInt()
+                                          allChunks.add(combined)
+                                          continue
                                       }
                                   }
-                                  val nativeResult = native.synthesize(
-                                      text = chunkText,
-                                      speakerEmbeddingPath = selectedVoice?.speakerEmbeddingPath,
-                                      params = QwenEngine.NativeParams(languageId = _uiState.value.selectedLanguageId),
-                                  )
-                                  if (!nativeResult.success || nativeResult.audio == null) {
-                                      error(nativeResult.errorMsg ?: "Chunk ${idx + 1}/${chunks.size} synthesis failed")
-                                  }
-                                  sampleRate = nativeResult.sampleRate.takeIf { it > 0 } ?: sampleRate
-                                  totalMs += nativeResult.timeMs
-                                  completedFrames += (nativeResult.audio.size.toDouble() / sampleRate.toDouble() / 0.08).toInt()
-                                  allChunks.add(nativeResult.audio)
+                                  completedFrames += (audio.size.toDouble() / sampleRate.toDouble() / 0.08).toInt()
+                                  allChunks.add(audio)
                               }
                           } finally {
                               _uiState.update {
@@ -468,7 +476,7 @@ jobs:
                               it.copy(
                                   busy = false,
                                   loaded = true,
-                                  status = "Speech ready (${chunks.size} chunks)",
+                                  status = "生成完成 (共 ${chunks.size} 段)",
                                   sampleRate = sampleRate,
                                   sampleCount = mergedAudio.size,
                                   synthesisMillis = totalMs,
@@ -493,9 +501,37 @@ jobs:
               }
           }
 
-          private fun splitLongTextUnlimited(raw: String, maxChars: Int = 68): List<String> {
-              val cleaned = raw.replace("\\r\\n", "\\n").replace('\\r', '\\n').trim()
+          private fun computeSafeMaxAudioTokens(piece: String): Int {
+              var cjk = 0
+              var other = 0
+              for (ch in piece) {
+                  if (ch.isWhitespace()) continue
+                  val code = ch.code
+                  if (code in 0x3000..0x9FFF || code in 0xAC00..0xD7AF || code in 0xFF00..0xFFEF) {
+                      cjk++
+                  } else {
+                      other++
+                  }
+              }
+              // 12.5 Hz codec (~3.5 frames/CJK char normal). Cap at ~6 frames/CJK char + 48 buffer to prevent infinite EOS runaway.
+              val est = (cjk * 6) + (other * 1.6).toInt() + 48
+              return est.coerceIn(72, 220)
+          }
+
+          private fun splitLongTextUnlimited(raw: String): List<String> {
+              val cleaned = raw
+                  .replace("\\u200B", "")
+                  .replace("\\uFEFF", "")
+                  .replace("\\r\\n", "\\n")
+                  .replace('\\r', '\\n')
+                  .trim()
               if (cleaned.isEmpty()) return emptyList()
+
+              val cjkCount = cleaned.count { it.code in 0x3000..0x9FFF || it.code in 0xAC00..0xD7AF }
+              val isMostlyCjk = cjkCount * 3 >= cleaned.length
+              val maxChars = if (isMostlyCjk) 32 else 90
+              val minMergeChars = if (isMostlyCjk) 10 else 28
+
               val sentenceEnds = setOf('。', '！', '？', '!', '?', '\\n', '…', '；', ';')
               val clauseEnds = setOf('，', ',', '、', '：', ':')
               val closers = setOf('”', '’', '」', '』', ')', '）', '》', '"')
@@ -505,6 +541,13 @@ jobs:
               var i = 0
               while (i < cleaned.length) {
                   val ch = cleaned[i]
+                  if (ch == '\\n') {
+                      val seg = buf.toString().trim()
+                      if (seg.isNotEmpty()) rawSentences.add(seg)
+                      buf.clear()
+                      i++
+                      continue
+                  }
                   buf.append(ch)
                   val isDecimal = ch == '.' && i > 0 && i + 1 < cleaned.length && cleaned[i - 1].isDigit() && cleaned[i + 1].isDigit()
                   if (ch in sentenceEnds || (ch == '.' && !isDecimal)) {
@@ -536,7 +579,7 @@ jobs:
                           }
                           var splitAt = -1
                           for (k in end downTo start + maxChars / 3) {
-                              if (seg[k] in clauseEnds || seg[k] == ' ') {
+                              if (seg[k] in clauseEnds || (!isMostlyCjk && seg[k] == ' ')) {
                                   splitAt = k + 1
                                   break
                               }
@@ -554,8 +597,9 @@ jobs:
               for (piece in bounded) {
                   if (cur.isEmpty()) {
                       cur.append(piece)
-                  } else if (cur.length < 22 && cur.length + piece.length <= maxChars) {
-                      cur.append(' ').append(piece)
+                  } else if (cur.length < minMergeChars && cur.length + piece.length <= maxChars) {
+                      if (!isMostlyCjk) cur.append(' ')
+                      cur.append(piece)
                   } else {
                       merged.add(cur.toString().trim())
                       cur.clear()
@@ -590,12 +634,12 @@ jobs:
               }
               return out
           }
-          '''
+          """.replace("__NATIVE_PARAMS_EXPR__", native_params_expr)
           s = s[:synth_start] + new_synth + "\n\n" + s[synth_end:]
 
           play_start = s.index("    fun playAudio(historyGenerationId: Long? = null) {")
           play_end = s.index("    fun stopAudio() {")
-          new_play = '''    fun playAudio(historyGenerationId: Long? = null) {
+          new_play = """    fun playAudio(historyGenerationId: Long? = null) {
               val samples = generatedAudio ?: return
               val sampleRate = _uiState.value.sampleRate.takeIf { it > 0 } ?: 24_000
               stopAudio()
@@ -644,7 +688,7 @@ jobs:
                   }
               }
           }
-          '''
+          """
           s = s[:play_start] + new_play + "\n\n" + s[play_end:]
 
           a1 = "    fun cancelVoiceRecording() {\n        recorder.cancel()\n    }"
@@ -652,7 +696,7 @@ jobs:
           a3 = "                if (state.supportsCloning == false) {"
           assert a1 in s and a2 in s and a3 in s, "Voice import anchors missing"
 
-          vm_fn = '''
+          vm_fn = """
 
           fun importVoiceFromUri(uri: android.net.Uri, name: String) {
               if (_uiState.value.busy || recorderState.value.isRecording) return
@@ -707,24 +751,24 @@ jobs:
                       },
                   )
               }
-          }'''
+          }"""
 
-          launcher_code = '''
+          launcher_code = """
           val audioPickerLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
               if (uri != null) {
                   viewModel.importVoiceFromUri(uri, voiceName)
                   voiceName = ""
               }
-          }'''
+          }"""
 
-          btn_code = '''                OutlinedButton(
+          btn_code = """                OutlinedButton(
                           onClick = { audioPickerLauncher.launch(arrayOf("audio/*", "video/*", "*/*")) },
                           enabled = !state.busy && !recorderState.isRecording,
                           modifier = Modifier.fillMaxWidth(),
                       ) {
                           Text("导入本地音频 (MP3 / WAV / M4A / 视频)")
                       }
-          '''
+          """
 
           s = s.replace(a1, a1 + vm_fn, 1)
           s = s.replace(a2, a2 + launcher_code, 1)
@@ -795,6 +839,6 @@ jobs:
           target_commitish: ${{ github.sha }}
           name: Qwen3 TTS Android ${{ env.RELEASE_VERSION }} Unlimited
           body: |
-            Snapdragon 8 Elite turbo build with permanent signing key, unlimited long-text chunking, streaming playback, 0.6B Q8 / 1.7B Q4 model selector, and local audio/video voice import.
+            Snapdragon 8 Elite turbo build with permanent signing key, anti-runaway 32-char CJK chunking + dynamic maxAudioTokens cap, streaming playback, 0.6B Q8 / 1.7B Q4 model selector, and local audio/video voice import.
           prerelease: ${{ github.event_name == 'workflow_dispatch' && inputs.prerelease || false }}
           files: artifacts/*.apk
