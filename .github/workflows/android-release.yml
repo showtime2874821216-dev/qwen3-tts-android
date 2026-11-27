@@ -35,6 +35,34 @@ jobs:
           git submodule sync --recursive
           git submodule update --init --recursive --depth=1
 
+      - name: Optimize Native CMake for Snapdragon 8 Elite (SM8750)
+        run: |
+          python3 - << 'PY'
+          import re
+          from pathlib import Path
+
+          cmake = Path("app/src/main/cpp/CMakeLists.txt")
+          s = cmake.read_text(encoding="utf-8")
+          turbo_block = '''
+          # === Snapdragon 8 Elite (SM8750) Turbo Optimization ===
+          set(CMAKE_C_FLAGS_DEBUG "-O3 -DNDEBUG -march=armv8.2-a+dotprod+fp16+i8mm" CACHE STRING "" FORCE)
+          set(CMAKE_CXX_FLAGS_DEBUG "-O3 -DNDEBUG -march=armv8.2-a+dotprod+fp16+i8mm" CACHE STRING "" FORCE)
+          set(CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG -march=armv8.2-a+dotprod+fp16+i8mm" CACHE STRING "" FORCE)
+          set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -march=armv8.2-a+dotprod+fp16+i8mm" CACHE STRING "" FORCE)
+          add_compile_options(-O3 -DNDEBUG -march=armv8.2-a+dotprod+fp16+i8mm)
+          add_link_options(-Wl,-z,max-page-size=16384)
+          '''
+          if "Snapdragon 8 Elite (SM8750) Turbo Optimization" not in s:
+              m = re.search(r'^project\s*\([^\n]*\)\s*$', s, re.M)
+              if not m:
+                  m = re.search(r'^cmake_minimum_required\s*\([^\n]*\)\s*$', s, re.M)
+              assert m, "Could not find project() or cmake_minimum_required() in CMakeLists.txt"
+              pos = m.end()
+              s = s[:pos] + "\n" + turbo_block + "\n" + s[pos:]
+              cmake.write_text(s, encoding="utf-8")
+              print("CMakeLists.txt patched with SM8750 -O3 dotprod+fp16+i8mm flags!")
+          PY
+
       - name: Inject Local Audio Importer
         run: |
           cat << 'EOF' > app/src/main/java/com/qwen/tts/android/data/AudioImporter.kt
@@ -385,28 +413,22 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build APK
+      - name: Build Turbo APK
         run: |
           chmod +x ./gradlew
-          ./gradlew :app:assembleRelease :app:assembleDebug
+          ./gradlew :app:assembleDebug
 
       - name: Collect APK
         run: |
           mkdir -p artifacts
-          if [ -f "app/build/outputs/apk/release/app-release.apk" ]; then
-            cp app/build/outputs/apk/release/app-release.apk \
-              "artifacts/qwen3-tts-android-${RELEASE_VERSION}-arm64-v8a-release.apk"
-          fi
-          if [ -f "app/build/outputs/apk/debug/app-debug.apk" ]; then
-            cp app/build/outputs/apk/debug/app-debug.apk \
-              "artifacts/qwen3-tts-android-${RELEASE_VERSION}-arm64-v8a-debug.apk"
-          fi
+          cp app/build/outputs/apk/debug/app-debug.apk \
+            "artifacts/qwen3-tts-android-${RELEASE_VERSION}-arm64-v8a-turbo.apk"
           ls -lh artifacts
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: qwen3-tts-android-${{ env.RELEASE_VERSION }}
+          name: qwen3-tts-android-${{ env.RELEASE_VERSION }}-turbo
           path: artifacts/*.apk
 
       - name: Publish GitHub release
@@ -414,8 +436,8 @@ jobs:
         with:
           tag_name: v${{ env.RELEASE_VERSION }}
           target_commitish: ${{ github.sha }}
-          name: Qwen3 TTS Android ${{ env.RELEASE_VERSION }}
+          name: Qwen3 TTS Android ${{ env.RELEASE_VERSION }} Turbo
           body: |
-            Android APK with local audio/video voice import for arm64 devices.
+            Snapdragon 8 Elite (-O3 + dotprod + fp16 + i8mm) optimized arm64 APK with local audio/video import.
           prerelease: ${{ github.event_name == 'workflow_dispatch' && inputs.prerelease || false }}
           files: artifacts/*.apk
