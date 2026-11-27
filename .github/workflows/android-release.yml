@@ -35,6 +35,61 @@ jobs:
           git submodule sync --recursive
           git submodule update --init --recursive --depth=1
 
+      - name: Install Permanent Fixed Signing Keystore
+        run: |
+          mkdir -p "$HOME/.android"
+          base64 -d << 'KS_EOF' > "$HOME/.android/debug.keystore"
+          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
+          AicQ
+          KS_EOF
+          ls -lh "$HOME/.android/debug.keystore"
+
       - name: Optimize Native CMake for Snapdragon 8 Elite (SM8750)
         run: |
           python3 - << 'PY'
@@ -60,10 +115,10 @@ jobs:
               pos = m.end()
               s = s[:pos] + "\n" + turbo_block + "\n" + s[pos:]
               cmake.write_text(s, encoding="utf-8")
-              print("CMakeLists.txt patched with SM8750 -O3 dotprod+fp16+i8mm flags!")
+              print("CMakeLists.txt patched!")
           PY
 
-      - name: Inject Local Audio Importer
+      - name: Inject AudioImporter + Unlimited Context + Multi-Model Upgrade
         run: |
           cat << 'EOF' > app/src/main/java/com/qwen/tts/android/data/AudioImporter.kt
           package com.qwen.tts.android.data
@@ -290,91 +345,407 @@ jobs:
           from pathlib import Path
           p = Path("app/src/main/java/com/qwen/tts/android/MainActivity.kt")
           s = p.read_text(encoding="utf-8")
-          if "fun importVoiceFromUri(" not in s:
-              a1 = "    fun cancelVoiceRecording() {\n        recorder.cancel()\n    }"
-              a2 = "        if (granted) viewModel.startVoiceRecording()\n    }"
-              a3 = "                if (state.supportsCloning == false) {"
-              assert a1 in s and a2 in s and a3 in s, "Anchor not found in MainActivity.kt"
 
-              vm_fn = '''
+          # 1. Add higher-quality models (0.6B Q8_0 + 1.7B Q4_K_M) to QwenModel
+          old_variants = "    val variants = listOf(defaultVariant)"
+          new_variants = '''    val q8Variant: ModelVariant = variant(
+              id = "q8_0",
+              label = "0.6B Q8",
+              displayName = "Qwen3-TTS 0.6B Q8_0 (高音质推荐)",
+              talkerName = "qwen-talker-0.6b-base-Q8_0.gguf",
+              tokenizerName = "qwen-tokenizer-12hz-Q8_0.gguf",
+              talkerSizeBytes = 980_000_000L,
+              tokenizerSizeBytes = 285_000_000L,
+          )
 
-              fun importVoiceFromUri(uri: android.net.Uri, name: String) {
-                  if (_uiState.value.busy || recorderState.value.isRecording) return
-                  val trimmedName = name.trim().ifBlank { "Voice ${voices.value.size + 1}" }
-                  viewModelScope.launch {
-                      startBusy(status = "Importing audio & creating voice")
-                      val created = runCatching {
-                          withContext(Dispatchers.IO) {
-                              val pendingFile = File(voiceDir, "import-${System.currentTimeMillis()}.wav")
-                              val result = com.qwen.tts.android.data.AudioImporter.importToWav24k(
-                                  context = getApplication(),
-                                  sourceUri = uri,
-                                  outputWavFile = pendingFile,
-                              )
-                              val native = ensureEngineLoaded(selectedVariant())
-                              val caps = native.getModelCapabilities()
-                              if (caps?.supportsCloning == false) {
-                                  runCatching { result.file.delete() }
-                                  error("The loaded model does not expose a speaker encoder.")
-                              }
-                              val voiceId = "voice-${System.currentTimeMillis()}"
-                              val targetDir = File(voiceDir, voiceId).apply { mkdirs() }
-                              val reference = File(targetDir, "reference.wav")
-                              result.file.copyTo(reference, overwrite = true)
-                              runCatching { result.file.delete() }
-                              val embedding = File(targetDir, "speaker.json")
-                              if (!native.extractSpeakerEmbedding(reference.absolutePath, embedding.absolutePath)) {
-                                  error(native.getLastError() ?: "Speaker embedding extraction failed")
-                              }
-                              VoiceProfileEntity(
-                                  voiceId = voiceId,
-                                  name = makeUniqueVoiceName(trimmedName),
-                                  referenceWavPath = reference.absolutePath,
-                                  speakerEmbeddingPath = embedding.absolutePath,
-                                  durationMillis = result.durationMillis,
+          val talker17bQ4Variant: ModelVariant = variant(
+              id = "1.7b_q4_k_m",
+              label = "1.7B Q4",
+              displayName = "Qwen3-TTS 1.7B Q4_K_M (旗舰戏感)",
+              talkerName = "qwen-talker-1.7b-base-Q4_K_M.gguf",
+              tokenizerName = "qwen-tokenizer-12hz-Q4_K_M.gguf",
+              talkerSizeBytes = 1_190_000_000L,
+              tokenizerSizeBytes = 254_974_752L,
+          )
+
+          val variants = listOf(defaultVariant, q8Variant, talker17bQ4Variant)'''
+          assert old_variants in s, "variants anchor missing"
+          s = s.replace(old_variants, new_variants, 1)
+
+          # 2. Wire model selector into SettingsScreen & ModelPanel
+          old_settings_call = '''        ModelPanel(
+                      state = state,
+                      onDownload = viewModel::downloadModel,
+                      onLoad = viewModel::loadModel,
+                  )'''
+          # handle standard indentation in SettingsScreen
+          old_settings_call = "        ModelPanel(\n            state = state,\n            onDownload = viewModel::downloadModel,\n            onLoad = viewModel::loadModel,\n        )"
+          new_settings_call = "        ModelPanel(\n            state = state,\n            onSelectModel = viewModel::selectModel,\n            onDownload = viewModel::downloadModel,\n            onLoad = viewModel::loadModel,\n        )"
+          assert old_settings_call in s, "SettingsScreen ModelPanel anchor missing"
+          s = s.replace(old_settings_call, new_settings_call, 1)
+
+          old_model_panel = "private fun ModelPanel(\n    state: QwenTtsUiState,\n    onDownload: () -> Unit,\n    onLoad: () -> Unit,\n) {"
+          new_model_panel = "private fun ModelPanel(\n    state: QwenTtsUiState,\n    onSelectModel: (String) -> Unit,\n    onDownload: () -> Unit,\n    onLoad: () -> Unit,\n) {"
+          assert old_model_panel in s, "ModelPanel signature anchor missing"
+          s = s.replace(old_model_panel, new_model_panel, 1)
+
+          old_model_dl = "            if (state.downloading) {"
+          model_chips = '''            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                          QwenModel.variants.forEach { v ->
+                              FilterChip(
+                                  selected = state.selectedModelId == v.id,
+                                  onClick = { onSelectModel(v.id) },
+                                  enabled = !state.busy,
+                                  label = { Text(v.label) },
                               )
                           }
                       }
-                      created.fold(
-                          onSuccess = { voice ->
-                              dao.insertVoice(voice)
-                              stopBusyTicker()
-                              _uiState.update {
-                                  it.copy(busy = false, selectedVoiceId = voice.voiceId, status = "Voice imported", error = null)
-                              }
-                          },
-                          onFailure = { throwable ->
-                              stopBusyTicker()
-                              _uiState.update {
-                                  it.copy(busy = false, status = "Voice import failed", error = throwable.message ?: "Voice import failed")
-                              }
-                          },
-                      )
-                  }
-              }'''
 
-              launcher_code = '''
-              val audioPickerLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-                  if (uri != null) {
-                      viewModel.importVoiceFromUri(uri, voiceName)
-                      voiceName = ""
-                  }
-              }'''
+                      if (state.downloading) {'''
+          assert old_model_dl in s, "ModelPanel downloading anchor missing"
+          s = s.replace(old_model_dl, model_chips, 1)
 
-              btn_code = '''                OutlinedButton(
-                              onClick = { audioPickerLauncher.launch(arrayOf("audio/*", "video/*", "*/*")) },
-                              enabled = !state.busy && !recorderState.isRecording,
-                              modifier = Modifier.fillMaxWidth(),
-                          ) {
-                              Text("导入本地音频 (MP3 / WAV / M4A / 视频)")
+          # 3. Add 8-thread option for 8-core Snapdragon 8 Elite
+          old_threads = "listOf(4, 6).forEach { threads ->"
+          assert old_threads in s, "threads anchor missing"
+          s = s.replace(old_threads, "listOf(4, 6, 8).forEach { threads ->", 1)
+
+          # 4. Upgrade synthesize() to Unlimited-Context chunked synthesis + cross-fade
+          synth_start = s.index("    fun synthesize() {")
+          synth_end = s.index("    fun startVoiceRecording() {")
+          new_synth = '''    fun synthesize() {
+              val text = _uiState.value.text.trim()
+              if (text.isEmpty() || _uiState.value.busy) return
+              viewModelScope.launch {
+                  val variant = selectedVariant()
+                  val selectedVoice = _uiState.value.selectedVoiceId?.let { id -> voices.value.firstOrNull { it.voiceId == id } }
+                  val chunks = splitLongTextUnlimited(text)
+                  val estimate = estimateSynthesisMillis(text)
+                  startBusy(status = "Synthesizing (${chunks.size} chunks)", resetSynthesis = true, synthesisEstimate = estimate)
+
+                  val result = runCatching {
+                      withContext(Dispatchers.IO) {
+                          val native = ensureEngineLoaded(variant)
+                          val allChunks = ArrayList<FloatArray>(chunks.size)
+                          var sampleRate = 24_000
+                          var totalMs = 0L
+                          var completedFrames = 0
+
+                          try {
+                              for (idx in chunks.indices) {
+                                  val chunkText = chunks[idx]
+                                  val baseFrames = completedFrames
+                                  native.setProgressCallback { frames, maxTokens ->
+                                      _uiState.update {
+                                          it.copy(
+                                              loaded = true,
+                                              status = "Chunk ${idx + 1}/${chunks.size}",
+                                              synthesisFrames = baseFrames + frames,
+                                              maxAudioTokens = maxTokens,
+                                          )
+                                      }
+                                  }
+                                  val nativeResult = native.synthesize(
+                                      text = chunkText,
+                                      speakerEmbeddingPath = selectedVoice?.speakerEmbeddingPath,
+                                      params = QwenEngine.NativeParams(languageId = _uiState.value.selectedLanguageId),
+                                  )
+                                  if (!nativeResult.success || nativeResult.audio == null) {
+                                      error(nativeResult.errorMsg ?: "Chunk ${idx + 1}/${chunks.size} synthesis failed")
+                                  }
+                                  sampleRate = nativeResult.sampleRate.takeIf { it > 0 } ?: sampleRate
+                                  totalMs += nativeResult.timeMs
+                                  completedFrames += (nativeResult.audio.size.toDouble() / sampleRate.toDouble() / 0.08).toInt()
+                                  allChunks.add(nativeResult.audio)
+                              }
+                          } finally {
+                              _uiState.update {
+                                  it.copy(activeBackendName = native.getActiveBackendName()?.takeIf { name -> name.isNotBlank() })
+                              }
+                              native.setProgressCallback(null)
                           }
+                          Triple(mergeAudioChunksSmoothly(allChunks, sampleRate), sampleRate, totalMs)
+                      }
+                  }
+
+                  result.fold(
+                      onSuccess = { (mergedAudio, sampleRate, totalMs) ->
+                          stopBusyTicker()
+                          generatedAudio = mergedAudio
+                          val voiceName = selectedVoice?.name ?: "Default Voice"
+                          persistGeneratedAudio(text, mergedAudio, sampleRate, voiceName, selectedVoice?.voiceId, totalMs)
+                          _uiState.update {
+                              it.copy(
+                                  busy = false,
+                                  loaded = true,
+                                  status = "Speech ready (${chunks.size} chunks)",
+                                  sampleRate = sampleRate,
+                                  sampleCount = mergedAudio.size,
+                                  synthesisMillis = totalMs,
+                                  estimatedSynthesisMillis = null,
+                                  estimateSampleCount = 0,
+                                  error = null,
+                              )
+                          }
+                          playAudio()
+                      },
+                      onFailure = { throwable ->
+                          stopBusyTicker()
+                          _uiState.update {
+                              it.copy(
+                                  busy = false,
+                                  status = "Synthesis failed",
+                                  error = throwable.message ?: "Synthesis failed",
+                              )
+                          }
+                      },
+                  )
+              }
+          }
+
+          private fun splitLongTextUnlimited(raw: String, maxChars: Int = 68): List<String> {
+              val cleaned = raw.replace("\r\n", "\n").replace('\r', '\n').trim()
+              if (cleaned.isEmpty()) return emptyList()
+              val sentenceEnds = setOf('。', '！', '？', '!', '?', '\n', '…', '；', ';')
+              val clauseEnds = setOf('，', ',', '、', '：', ':')
+              val closers = setOf('”', '’', '」', '』', ')', '）', '》', '"')
+
+              val rawSentences = mutableListOf<String>()
+              val buf = StringBuilder()
+              var i = 0
+              while (i < cleaned.length) {
+                  val ch = cleaned[i]
+                  buf.append(ch)
+                  val isDecimal = ch == '.' && i > 0 && i + 1 < cleaned.length && cleaned[i - 1].isDigit() && cleaned[i + 1].isDigit()
+                  if (ch in sentenceEnds || (ch == '.' && !isDecimal)) {
+                      while (i + 1 < cleaned.length && cleaned[i + 1] in closers) {
+                          i++
+                          buf.append(cleaned[i])
+                      }
+                      val seg = buf.toString().trim()
+                      if (seg.isNotEmpty()) rawSentences.add(seg)
+                      buf.clear()
+                  }
+                  i++
+              }
+              val tail = buf.toString().trim()
+              if (tail.isNotEmpty()) rawSentences.add(tail)
+
+              val bounded = mutableListOf<String>()
+              for (seg in rawSentences) {
+                  if (seg.length <= maxChars) {
+                      bounded.add(seg)
+                  } else {
+                      var start = 0
+                      while (start < seg.length) {
+                          val end = minOf(start + maxChars, seg.length)
+                          if (end == seg.length) {
+                              val piece = seg.substring(start).trim()
+                              if (piece.isNotEmpty()) bounded.add(piece)
+                              break
+                          }
+                          var splitAt = -1
+                          for (k in end downTo start + maxChars / 3) {
+                              if (seg[k] in clauseEnds || seg[k] == ' ') {
+                                  splitAt = k + 1
+                                  break
+                              }
+                          }
+                          if (splitAt <= start) splitAt = end
+                          val piece = seg.substring(start, splitAt).trim()
+                          if (piece.isNotEmpty()) bounded.add(piece)
+                          start = splitAt
+                      }
+                  }
+              }
+
+              val merged = mutableListOf<String>()
+              val cur = StringBuilder()
+              for (piece in bounded) {
+                  if (cur.isEmpty()) {
+                      cur.append(piece)
+                  } else if (cur.length < 22 && cur.length + piece.length <= maxChars) {
+                      cur.append(' ').append(piece)
+                  } else {
+                      merged.add(cur.toString().trim())
+                      cur.clear()
+                      cur.append(piece)
+                  }
+              }
+              if (cur.isNotEmpty()) merged.add(cur.toString().trim())
+              return merged
+          }
+
+          private fun mergeAudioChunksSmoothly(chunks: List<FloatArray>, sampleRate: Int): FloatArray {
+              if (chunks.isEmpty()) return FloatArray(0)
+              if (chunks.size == 1) return chunks[0]
+              val pauseSamples = (sampleRate * 0.12).toInt()
+              val fadeSamples = (sampleRate * 0.015).toInt()
+              var totalLen = 0
+              for (c in chunks) totalLen += c.size
+              totalLen += pauseSamples * (chunks.size - 1)
+              val out = FloatArray(totalLen)
+              var pos = 0
+              for (idx in chunks.indices) {
+                  val c = chunks[idx]
+                  val f = minOf(fadeSamples, c.size / 4)
+                  for (i in c.indices) {
+                      var v = c[i]
+                      if (i < f) v *= (i.toFloat() / f.toFloat())
+                      else if (i >= c.size - f) v *= ((c.size - 1 - i).toFloat() / f.toFloat())
+                      out[pos + i] = v
+                  }
+                  pos += c.size
+                  if (idx < chunks.lastIndex) pos += pauseSamples
+              }
+              return out
+          }
+
+      '''
+          s = s[:synth_start] + new_synth + s[synth_end:]
+
+          # 5. Upgrade playAudio() to MODE_STREAM so arbitrarily long audio never crashes AudioTrack
+          play_start = s.index("    fun playAudio(historyGenerationId: Long? = null) {")
+          play_end = s.index("    fun stopAudio() {")
+          new_play = '''    fun playAudio(historyGenerationId: Long? = null) {
+              val samples = generatedAudio ?: return
+              val sampleRate = _uiState.value.sampleRate.takeIf { it > 0 } ?: 24_000
+              stopAudio()
+              playJob = viewModelScope.launch(Dispatchers.IO) {
+                  val minBuf = AudioTrack.getMinBufferSize(
+                      sampleRate,
+                      AudioFormat.CHANNEL_OUT_MONO,
+                      AudioFormat.ENCODING_PCM_FLOAT,
+                  ).coerceAtLeast(sampleRate / 4 * 4)
+                  val track = AudioTrack.Builder()
+                      .setAudioAttributes(
+                          AudioAttributes.Builder()
+                              .setUsage(AudioAttributes.USAGE_MEDIA)
+                              .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                              .build(),
+                      )
+                      .setAudioFormat(
+                          AudioFormat.Builder()
+                              .setEncoding(AudioFormat.ENCODING_PCM_FLOAT)
+                              .setSampleRate(sampleRate)
+                              .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                              .build(),
+                      )
+                      .setBufferSizeInBytes(minBuf * 2)
+                      .setTransferMode(AudioTrack.MODE_STREAM)
+                      .build()
+
+                  activeTrack = track
+                  _uiState.update { it.copy(playing = true, playingGenerationId = historyGenerationId) }
+                  try {
+                      track.play()
+                      var offset = 0
+                      val step = 4096
+                      while (offset < samples.size) {
+                          val count = minOf(step, samples.size - offset)
+                          val written = track.write(samples, offset, count, AudioTrack.WRITE_BLOCKING)
+                          if (written <= 0) break
+                          offset += written
+                      }
+                      kotlinx.coroutines.delay(250L)
+                  } finally {
+                      runCatching { track.stop() }
+                      runCatching { track.release() }
+                      if (activeTrack == track) activeTrack = null
+                      _uiState.update { it.copy(playing = false, playingGenerationId = null) }
+                  }
+              }
+          }
+
+      '''
+          s = s[:play_start] + new_play + s[play_end:]
+
+          # 6. Inject local audio/video voice importer
+          a1 = "    fun cancelVoiceRecording() {\n        recorder.cancel()\n    }"
+          a2 = "        if (granted) viewModel.startVoiceRecording()\n    }"
+          a3 = "                if (state.supportsCloning == false) {"
+          assert a1 in s and a2 in s and a3 in s, "Voice import anchors missing"
+
+          vm_fn = '''
+
+          fun importVoiceFromUri(uri: android.net.Uri, name: String) {
+              if (_uiState.value.busy || recorderState.value.isRecording) return
+              val trimmedName = name.trim().ifBlank { "Voice ${voices.value.size + 1}" }
+              viewModelScope.launch {
+                  startBusy(status = "Importing audio & creating voice")
+                  val created = runCatching {
+                      withContext(Dispatchers.IO) {
+                          val pendingFile = File(voiceDir, "import-${System.currentTimeMillis()}.wav")
+                          val result = com.qwen.tts.android.data.AudioImporter.importToWav24k(
+                              context = getApplication(),
+                              sourceUri = uri,
+                              outputWavFile = pendingFile,
+                          )
+                          val native = ensureEngineLoaded(selectedVariant())
+                          val caps = native.getModelCapabilities()
+                          if (caps?.supportsCloning == false) {
+                              runCatching { result.file.delete() }
+                              error("The loaded model does not expose a speaker encoder.")
+                          }
+                          val voiceId = "voice-${System.currentTimeMillis()}"
+                          val targetDir = File(voiceDir, voiceId).apply { mkdirs() }
+                          val reference = File(targetDir, "reference.wav")
+                          result.file.copyTo(reference, overwrite = true)
+                          runCatching { result.file.delete() }
+                          val embedding = File(targetDir, "speaker.json")
+                          if (!native.extractSpeakerEmbedding(reference.absolutePath, embedding.absolutePath)) {
+                              error(native.getLastError() ?: "Speaker embedding extraction failed")
+                          }
+                          VoiceProfileEntity(
+                              voiceId = voiceId,
+                              name = makeUniqueVoiceName(trimmedName),
+                              referenceWavPath = reference.absolutePath,
+                              speakerEmbeddingPath = embedding.absolutePath,
+                              durationMillis = result.durationMillis,
+                          )
+                      }
+                  }
+                  created.fold(
+                      onSuccess = { voice ->
+                          dao.insertVoice(voice)
+                          stopBusyTicker()
+                          _uiState.update {
+                              it.copy(busy = false, selectedVoiceId = voice.voiceId, status = "Voice imported", error = null)
+                          }
+                      },
+                      onFailure = { throwable ->
+                          stopBusyTicker()
+                          _uiState.update {
+                              it.copy(busy = false, status = "Voice import failed", error = throwable.message ?: "Voice import failed")
+                          }
+                      },
+                  )
+              }
+          }'''
+
+          launcher_code = '''
+          val audioPickerLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+              if (uri != null) {
+                  viewModel.importVoiceFromUri(uri, voiceName)
+                  voiceName = ""
+              }
+          }'''
+
+          btn_code = '''                OutlinedButton(
+                          onClick = { audioPickerLauncher.launch(arrayOf("audio/*", "video/*", "*/*")) },
+                          enabled = !state.busy && !recorderState.isRecording,
+                          modifier = Modifier.fillMaxWidth(),
+                      ) {
+                          Text("导入本地音频 (MP3 / WAV / M4A / 视频)")
+                      }
           '''
 
-              s = s.replace(a1, a1 + vm_fn, 1)
-              s = s.replace(a2, a2 + launcher_code, 1)
-              s = s.replace(a3, btn_code + a3, 1)
-              p.write_text(s, encoding="utf-8")
-              print("MainActivity.kt patched successfully!")
+          s = s.replace(a1, a1 + vm_fn, 1)
+          s = s.replace(a2, a2 + launcher_code, 1)
+          s = s.replace(a3, btn_code + a3, 1)
+
+          p.write_text(s, encoding="utf-8")
+          print("ALL PATCHES APPLIED TO MainActivity.kt SUCCESSFULLY!")
           PY
 
       - name: Resolve release version
@@ -413,7 +784,7 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build Turbo APK
+      - name: Build Turbo Unlimited APK
         run: |
           chmod +x ./gradlew
           ./gradlew :app:assembleDebug
@@ -422,13 +793,13 @@ jobs:
         run: |
           mkdir -p artifacts
           cp app/build/outputs/apk/debug/app-debug.apk \
-            "artifacts/qwen3-tts-android-${RELEASE_VERSION}-arm64-v8a-turbo.apk"
+            "artifacts/qwen3-tts-android-${RELEASE_VERSION}-arm64-v8a-unlimited.apk"
           ls -lh artifacts
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: qwen3-tts-android-${{ env.RELEASE_VERSION }}-turbo
+          name: qwen3-tts-android-${{ env.RELEASE_VERSION }}-unlimited
           path: artifacts/*.apk
 
       - name: Publish GitHub release
@@ -436,8 +807,8 @@ jobs:
         with:
           tag_name: v${{ env.RELEASE_VERSION }}
           target_commitish: ${{ github.sha }}
-          name: Qwen3 TTS Android ${{ env.RELEASE_VERSION }} Turbo
+          name: Qwen3 TTS Android ${{ env.RELEASE_VERSION }} Unlimited
           body: |
-            Snapdragon 8 Elite (-O3 + dotprod + fp16 + i8mm) optimized arm64 APK with local audio/video import.
+            Snapdragon 8 Elite turbo build with permanent signing key, unlimited long-text chunking, streaming playback, 0.6B Q8 / 1.7B Q4 model selector, and local audio/video voice import.
           prerelease: ${{ github.event_name == 'workflow_dispatch' && inputs.prerelease || false }}
           files: artifacts/*.apk
