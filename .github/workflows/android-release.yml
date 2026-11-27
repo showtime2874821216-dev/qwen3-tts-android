@@ -346,7 +346,6 @@ jobs:
           p = Path("app/src/main/java/com/qwen/tts/android/MainActivity.kt")
           s = p.read_text(encoding="utf-8")
 
-          # 1. Add higher-quality models (0.6B Q8_0 + 1.7B Q4_K_M) to QwenModel
           old_variants = "    val variants = listOf(defaultVariant)"
           new_variants = '''    val q8Variant: ModelVariant = variant(
               id = "q8_0",
@@ -372,13 +371,6 @@ jobs:
           assert old_variants in s, "variants anchor missing"
           s = s.replace(old_variants, new_variants, 1)
 
-          # 2. Wire model selector into SettingsScreen & ModelPanel
-          old_settings_call = '''        ModelPanel(
-                      state = state,
-                      onDownload = viewModel::downloadModel,
-                      onLoad = viewModel::loadModel,
-                  )'''
-          # handle standard indentation in SettingsScreen
           old_settings_call = "        ModelPanel(\n            state = state,\n            onDownload = viewModel::downloadModel,\n            onLoad = viewModel::loadModel,\n        )"
           new_settings_call = "        ModelPanel(\n            state = state,\n            onSelectModel = viewModel::selectModel,\n            onDownload = viewModel::downloadModel,\n            onLoad = viewModel::loadModel,\n        )"
           assert old_settings_call in s, "SettingsScreen ModelPanel anchor missing"
@@ -405,12 +397,10 @@ jobs:
           assert old_model_dl in s, "ModelPanel downloading anchor missing"
           s = s.replace(old_model_dl, model_chips, 1)
 
-          # 3. Add 8-thread option for 8-core Snapdragon 8 Elite
           old_threads = "listOf(4, 6).forEach { threads ->"
           assert old_threads in s, "threads anchor missing"
           s = s.replace(old_threads, "listOf(4, 6, 8).forEach { threads ->", 1)
 
-          # 4. Upgrade synthesize() to Unlimited-Context chunked synthesis + cross-fade
           synth_start = s.index("    fun synthesize() {")
           synth_end = s.index("    fun startVoiceRecording() {")
           new_synth = '''    fun synthesize() {
@@ -504,9 +494,9 @@ jobs:
           }
 
           private fun splitLongTextUnlimited(raw: String, maxChars: Int = 68): List<String> {
-              val cleaned = raw.replace("\r\n", "\n").replace('\r', '\n').trim()
+              val cleaned = raw.replace("\\r\\n", "\\n").replace('\\r', '\\n').trim()
               if (cleaned.isEmpty()) return emptyList()
-              val sentenceEnds = setOf('。', '！', '？', '!', '?', '\n', '…', '；', ';')
+              val sentenceEnds = setOf('。', '！', '？', '!', '?', '\\n', '…', '；', ';')
               val clauseEnds = setOf('，', ',', '、', '：', ':')
               val closers = setOf('”', '’', '」', '』', ')', '）', '》', '"')
 
@@ -600,11 +590,9 @@ jobs:
               }
               return out
           }
+          '''
+          s = s[:synth_start] + new_synth + "\n\n" + s[synth_end:]
 
-      '''
-          s = s[:synth_start] + new_synth + s[synth_end:]
-
-          # 5. Upgrade playAudio() to MODE_STREAM so arbitrarily long audio never crashes AudioTrack
           play_start = s.index("    fun playAudio(historyGenerationId: Long? = null) {")
           play_end = s.index("    fun stopAudio() {")
           new_play = '''    fun playAudio(historyGenerationId: Long? = null) {
@@ -656,11 +644,9 @@ jobs:
                   }
               }
           }
+          '''
+          s = s[:play_start] + new_play + "\n\n" + s[play_end:]
 
-      '''
-          s = s[:play_start] + new_play + s[play_end:]
-
-          # 6. Inject local audio/video voice importer
           a1 = "    fun cancelVoiceRecording() {\n        recorder.cancel()\n    }"
           a2 = "        if (granted) viewModel.startVoiceRecording()\n    }"
           a3 = "                if (state.supportsCloning == false) {"
