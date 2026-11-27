@@ -35,6 +35,320 @@ jobs:
           git submodule sync --recursive
           git submodule update --init --recursive --depth=1
 
+      - name: Inject Local Audio Importer
+        run: |
+          cat << 'EOF' > app/src/main/java/com/qwen/tts/android/data/AudioImporter.kt
+          package com.qwen.tts.android.data
+
+          import android.content.Context
+          import android.media.AudioFormat
+          import android.media.MediaCodec
+          import android.media.MediaExtractor
+          import android.media.MediaFormat
+          import android.net.Uri
+          import android.os.Build
+          import java.io.ByteArrayOutputStream
+          import java.io.File
+          import java.io.OutputStream
+          import java.nio.ByteBuffer
+          import java.nio.ByteOrder
+          import kotlin.math.abs
+          import kotlin.math.max
+          import kotlin.math.min
+
+          object AudioImporter {
+              private const val TARGET_SAMPLE_RATE = 24_000
+              private const val MAX_DURATION_US = 15_000_000L
+
+              fun importToWav24k(
+                  context: Context,
+                  sourceUri: Uri,
+                  outputWavFile: File,
+              ): RecordingResult {
+                  val extractor = MediaExtractor()
+                  try {
+                      extractor.setDataSource(context, sourceUri, null)
+                      var trackIndex = -1
+                      for (i in 0 until extractor.trackCount) {
+                          val mime = extractor.getTrackFormat(i).getString(MediaFormat.KEY_MIME) ?: continue
+                          if (mime.startsWith("audio/")) {
+                              trackIndex = i
+                              break
+                          }
+                      }
+                      require(trackIndex >= 0) { "所选文件中未找到有效音轨" }
+
+                      extractor.selectTrack(trackIndex)
+                      val format = extractor.getTrackFormat(trackIndex)
+                      val mime = format.getString(MediaFormat.KEY_MIME)
+                          ?: throw IllegalArgumentException("无法识别音频格式")
+
+                      var sampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE)
+                      var channels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
+                      var encoding = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
+                          format.containsKey(MediaFormat.KEY_PCM_ENCODING)
+                      ) {
+                          format.getInteger(MediaFormat.KEY_PCM_ENCODING)
+                      } else {
+                          AudioFormat.ENCODING_PCM_16BIT
+                      }
+
+                      val pcmOut = ByteArrayOutputStream()
+                      val codec = MediaCodec.createDecoderByType(mime)
+                      try {
+                          codec.configure(format, null, null, 0)
+                          codec.start()
+
+                          val info = MediaCodec.BufferInfo()
+                          var inputDone = false
+                          var outputDone = false
+
+                          while (!outputDone) {
+                              if (!inputDone) {
+                                  val inIdx = codec.dequeueInputBuffer(10_000L)
+                                  if (inIdx >= 0) {
+                                      val inBuf = codec.getInputBuffer(inIdx)
+                                      if (inBuf != null) {
+                                          val size = extractor.readSampleData(inBuf, 0)
+                                          val pts = extractor.sampleTime
+                                          if (size < 0 || pts > MAX_DURATION_US) {
+                                              codec.queueInputBuffer(inIdx, 0, 0, 0L, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
+                                              inputDone = true
+                                          } else {
+                                              codec.queueInputBuffer(inIdx, 0, size, pts, 0)
+                                              extractor.advance()
+                                          }
+                                      }
+                                  }
+                              }
+
+                              val outIdx = codec.dequeueOutputBuffer(info, 10_000L)
+                              when {
+                                  outIdx == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
+                                      val outFmt = codec.outputFormat
+                                      if (outFmt.containsKey(MediaFormat.KEY_SAMPLE_RATE)) {
+                                          sampleRate = outFmt.getInteger(MediaFormat.KEY_SAMPLE_RATE)
+                                      }
+                                      if (outFmt.containsKey(MediaFormat.KEY_CHANNEL_COUNT)) {
+                                          channels = outFmt.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
+                                      }
+                                      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
+                                          outFmt.containsKey(MediaFormat.KEY_PCM_ENCODING)
+                                      ) {
+                                          encoding = outFmt.getInteger(MediaFormat.KEY_PCM_ENCODING)
+                                      }
+                                  }
+                                  outIdx >= 0 -> {
+                                      val outBuf = codec.getOutputBuffer(outIdx)
+                                      if (outBuf != null && info.size > 0 && info.presentationTimeUs <= MAX_DURATION_US) {
+                                          val chunk = ByteArray(info.size)
+                                          outBuf.position(info.offset)
+                                          outBuf.limit(info.offset + info.size)
+                                          outBuf.get(chunk)
+                                          pcmOut.write(chunk)
+                                      }
+                                      codec.releaseOutputBuffer(outIdx, false)
+                                      if ((info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+                                          outputDone = true
+                                      }
+                                  }
+                              }
+                          }
+                      } finally {
+                          runCatching { codec.stop() }
+                          runCatching { codec.release() }
+                      }
+
+                      val mono = decodeToMonoFloat(pcmOut.toByteArray(), channels, encoding)
+                      require(mono.isNotEmpty()) { "解码后的音频为空" }
+
+                      val resampled = resampleLinear(mono, sampleRate, TARGET_SAMPLE_RATE)
+                      val normalized = normalizePeak(resampled)
+                      val pcm16Bytes = ByteArray(normalized.size * 2)
+                      for (i in normalized.indices) {
+                          val s = (normalized[i] * 32767f).toInt().coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt())
+                          pcm16Bytes[i * 2] = (s and 0xff).toByte()
+                          pcm16Bytes[i * 2 + 1] = ((s shr 8) and 0xff).toByte()
+                      }
+
+                      outputWavFile.parentFile?.mkdirs()
+                      outputWavFile.outputStream().use { out ->
+                          writeWavHeader(out, pcm16Bytes.size, TARGET_SAMPLE_RATE)
+                          out.write(pcm16Bytes)
+                      }
+                      val durationMs = (normalized.size.toLong() * 1000L) / TARGET_SAMPLE_RATE.toLong()
+                      return RecordingResult(file = outputWavFile, durationMillis = durationMs)
+                  } finally {
+                      runCatching { extractor.release() }
+                  }
+              }
+
+              private fun decodeToMonoFloat(bytes: ByteArray, channels: Int, encoding: Int): FloatArray {
+                  val ch = channels.coerceAtLeast(1)
+                  val bb = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
+                  return when (encoding) {
+                      AudioFormat.ENCODING_PCM_FLOAT -> {
+                          val frames = bytes.size / (4 * ch)
+                          FloatArray(frames) { f ->
+                              var acc = 0f
+                              for (c in 0 until ch) acc += bb.getFloat((f * ch + c) * 4)
+                              (acc / ch).coerceIn(-1f, 1f)
+                          }
+                      }
+                      AudioFormat.ENCODING_PCM_8BIT -> {
+                          val frames = bytes.size / ch
+                          FloatArray(frames) { f ->
+                              var acc = 0f
+                              for (c in 0 until ch) acc += ((bytes[f * ch + c].toInt() and 0xFF) - 128) / 128f
+                              (acc / ch).coerceIn(-1f, 1f)
+                          }
+                      }
+                      else -> {
+                          val frames = bytes.size / (2 * ch)
+                          FloatArray(frames) { f ->
+                              var acc = 0f
+                              for (c in 0 until ch) acc += bb.getShort((f * ch + c) * 2).toFloat() / 32768f
+                              (acc / ch).coerceIn(-1f, 1f)
+                          }
+                      }
+                  }
+              }
+
+              private fun resampleLinear(input: FloatArray, srcRate: Int, dstRate: Int): FloatArray {
+                  if (input.isEmpty() || srcRate <= 0 || srcRate == dstRate) return input
+                  val ratio = srcRate.toDouble() / dstRate.toDouble()
+                  val outLen = max(1, (input.size / ratio).toInt())
+                  return FloatArray(outLen) { i ->
+                      val pos = i * ratio
+                      val idx0 = pos.toInt().coerceIn(0, input.size - 1)
+                      val idx1 = min(idx0 + 1, input.size - 1)
+                      val frac = (pos - idx0).toFloat()
+                      input[idx0] * (1f - frac) + input[idx1] * frac
+                  }
+              }
+
+              private fun normalizePeak(samples: FloatArray): FloatArray {
+                  var peak = 0f
+                  for (v in samples) {
+                      val a = abs(v)
+                      if (a > peak) peak = a
+                  }
+                  if (peak < 1e-4f) return samples
+                  val gain = (0.89f / peak).coerceAtMost(6.0f)
+                  return FloatArray(samples.size) { i -> (samples[i] * gain).coerceIn(-1f, 1f) }
+              }
+
+              private fun writeWavHeader(out: OutputStream, pcmBytesSize: Int, sampleRate: Int) {
+                  val bb = ByteBuffer.allocate(44).order(ByteOrder.LITTLE_ENDIAN)
+                  bb.put("RIFF".toByteArray(Charsets.US_ASCII))
+                  bb.putInt(36 + pcmBytesSize)
+                  bb.put("WAVE".toByteArray(Charsets.US_ASCII))
+                  bb.put("fmt ".toByteArray(Charsets.US_ASCII))
+                  bb.putInt(16)
+                  bb.putShort(1)
+                  bb.putShort(1)
+                  bb.putInt(sampleRate)
+                  bb.putInt(sampleRate * 2)
+                  bb.putShort(2)
+                  bb.putShort(16)
+                  bb.put("data".toByteArray(Charsets.US_ASCII))
+                  bb.putInt(pcmBytesSize)
+                  out.write(bb.array())
+              }
+          }
+          EOF
+
+          python3 - << 'PY'
+          from pathlib import Path
+          p = Path("app/src/main/java/com/qwen/tts/android/MainActivity.kt")
+          s = p.read_text(encoding="utf-8")
+          if "fun importVoiceFromUri(" not in s:
+              a1 = "    fun cancelVoiceRecording() {\n        recorder.cancel()\n    }"
+              a2 = "        if (granted) viewModel.startVoiceRecording()\n    }"
+              a3 = "                if (state.supportsCloning == false) {"
+              assert a1 in s and a2 in s and a3 in s, "Anchor not found in MainActivity.kt"
+
+              vm_fn = '''
+
+              fun importVoiceFromUri(uri: android.net.Uri, name: String) {
+                  if (_uiState.value.busy || recorderState.value.isRecording) return
+                  val trimmedName = name.trim().ifBlank { "Voice ${voices.value.size + 1}" }
+                  viewModelScope.launch {
+                      startBusy(status = "Importing audio & creating voice")
+                      val created = runCatching {
+                          withContext(Dispatchers.IO) {
+                              val pendingFile = File(voiceDir, "import-${System.currentTimeMillis()}.wav")
+                              val result = com.qwen.tts.android.data.AudioImporter.importToWav24k(
+                                  context = getApplication(),
+                                  sourceUri = uri,
+                                  outputWavFile = pendingFile,
+                              )
+                              val native = ensureEngineLoaded(selectedVariant())
+                              val caps = native.getModelCapabilities()
+                              if (caps?.supportsCloning == false) {
+                                  runCatching { result.file.delete() }
+                                  error("The loaded model does not expose a speaker encoder.")
+                              }
+                              val voiceId = "voice-${System.currentTimeMillis()}"
+                              val targetDir = File(voiceDir, voiceId).apply { mkdirs() }
+                              val reference = File(targetDir, "reference.wav")
+                              result.file.copyTo(reference, overwrite = true)
+                              runCatching { result.file.delete() }
+                              val embedding = File(targetDir, "speaker.json")
+                              if (!native.extractSpeakerEmbedding(reference.absolutePath, embedding.absolutePath)) {
+                                  error(native.getLastError() ?: "Speaker embedding extraction failed")
+                              }
+                              VoiceProfileEntity(
+                                  voiceId = voiceId,
+                                  name = makeUniqueVoiceName(trimmedName),
+                                  referenceWavPath = reference.absolutePath,
+                                  speakerEmbeddingPath = embedding.absolutePath,
+                                  durationMillis = result.durationMillis,
+                              )
+                          }
+                      }
+                      created.fold(
+                          onSuccess = { voice ->
+                              dao.insertVoice(voice)
+                              stopBusyTicker()
+                              _uiState.update {
+                                  it.copy(busy = false, selectedVoiceId = voice.voiceId, status = "Voice imported", error = null)
+                              }
+                          },
+                          onFailure = { throwable ->
+                              stopBusyTicker()
+                              _uiState.update {
+                                  it.copy(busy = false, status = "Voice import failed", error = throwable.message ?: "Voice import failed")
+                              }
+                          },
+                      )
+                  }
+              }'''
+
+              launcher_code = '''
+              val audioPickerLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+                  if (uri != null) {
+                      viewModel.importVoiceFromUri(uri, voiceName)
+                      voiceName = ""
+                  }
+              }'''
+
+              btn_code = '''                OutlinedButton(
+                              onClick = { audioPickerLauncher.launch(arrayOf("audio/*", "video/*", "*/*")) },
+                              enabled = !state.busy && !recorderState.isRecording,
+                              modifier = Modifier.fillMaxWidth(),
+                          ) {
+                              Text("导入本地音频 (MP3 / WAV / M4A / 视频)")
+                          }
+          '''
+
+              s = s.replace(a1, a1 + vm_fn, 1)
+              s = s.replace(a2, a2 + launcher_code, 1)
+              s = s.replace(a3, btn_code + a3, 1)
+              p.write_text(s, encoding="utf-8")
+              print("MainActivity.kt patched successfully!")
+          PY
+
       - name: Resolve release version
         run: |
           version="${{ inputs.version }}"
@@ -102,6 +416,6 @@ jobs:
           target_commitish: ${{ github.sha }}
           name: Qwen3 TTS Android ${{ env.RELEASE_VERSION }}
           body: |
-            Android APK for arm64 devices.
+            Android APK with local audio/video voice import for arm64 devices.
           prerelease: ${{ github.event_name == 'workflow_dispatch' && inputs.prerelease || false }}
           files: artifacts/*.apk
