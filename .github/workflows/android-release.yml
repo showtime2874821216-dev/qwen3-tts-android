@@ -21,7 +21,7 @@ permissions:
 
 jobs:
   build-android:
-    name: Build Android APK (CN v3 Resume)
+    name: Build Android APK (CN v4 Resume)
     runs-on: ubuntu-latest
 
     steps:
@@ -1287,6 +1287,8 @@ jobs:
                       elif ch == '"':
                           in_str = False
                       continue
+                  if ch == "'" and i + 2 < len(src) and (src[i + 2] == "'" or (src[i + 1] == "\\" and i + 3 < len(src) and src[i + 3] == "'")):
+                      continue
                   if ch == '"':
                       in_str = True
                   elif ch == "{":
@@ -1301,10 +1303,36 @@ jobs:
           assert dl_span is not None, "Could not find fun downloadModel() in MainActivity.kt"
           orig_dl = s[dl_span[0]:dl_span[1]]
 
-          # Detect exact model directory variable name used in original downloadModel()
-          m_dir = re.search(r"File\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*,\s*[A-Za-z_][A-Za-z0-9_]*\.name", orig_dl)
-          model_dir_expr = m_dir.group(1) if m_dir else 'File(getApplication<Application>().filesDir, "models")'
-          print(f"Detected model_dir_expr={model_dir_expr}")
+          # Detect exact CLASS-LEVEL model directory property (never a local variable inside orig_dl!)
+          class_props = set(re.findall(r"^    (?:private\s+)?val\s+([A-Za-z_][A-Za-z0-9_]*)\b", s, re.M))
+          print(f"Class-level val properties: {sorted(class_props)}")
+          model_dir_expr = None
+          # 1) Check if orig_dl uses a File(<prop>, ...) where <prop> is a real class property
+          for cand in re.findall(r"File\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*,", orig_dl):
+              if cand in class_props:
+                  model_dir_expr = cand
+                  break
+          # 2) Check class properties named modelDir / modelsDir
+          if not model_dir_expr:
+              for cand in ("modelDir", "modelsDir", "modelRootDir"):
+                  if cand in class_props:
+                      model_dir_expr = cand
+                      break
+          # 3) Check helper function like modelDir() or modelFile(...)
+          if not model_dir_expr:
+              m_fn = re.search(r"\b(modelDir\s*\(\s*\))", s)
+              if m_fn:
+                  model_dir_expr = m_fn.group(1)
+          # 4) Safe fallback: inspect how variant.talkerName is located in MainActivity.kt
+          if not model_dir_expr:
+              m_talker = re.search(r"File\(\s*([^,\n]+?)\s*,\s*[^,\n]*talkerName", s)
+              if m_talker:
+                  expr = m_talker.group(1).strip()
+                  if expr in class_props or "filesDir" in expr:
+                      model_dir_expr = expr
+          if not model_dir_expr:
+              model_dir_expr = 'File(getApplication<Application>().filesDir, "models")'
+          print(f"Resolved safe model_dir_expr={model_dir_expr}")
 
           # Ensure FileOutputStream import exists
           if "import java.io.FileOutputStream" not in s:
@@ -1593,7 +1621,7 @@ jobs:
       - name: Build Turbo Unlimited CN APK
         run: |
           chmod +x ./gradlew
-          ./gradlew :app:assembleDebug
+          ./gradlew :app:assembleDebug --console=plain
 
       - name: Verify Fixed APK Signature & Collect APK
         run: |
@@ -1601,13 +1629,13 @@ jobs:
           "$SDK_DIR/build-tools/36.0.0/apksigner" verify --print-certs app/build/outputs/apk/debug/app-debug.apk
           mkdir -p artifacts
           cp app/build/outputs/apk/debug/app-debug.apk \
-            "artifacts/qwen3-tts-android-${RELEASE_VERSION}-arm64-v8a-cn-v3-resume.apk"
+            "artifacts/qwen3-tts-android-${RELEASE_VERSION}-arm64-v8a-cn-v4-resume.apk"
           ls -lh artifacts
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: qwen3-tts-android-${{ env.RELEASE_VERSION }}-cn-v3-resume
+          name: qwen3-tts-android-${{ env.RELEASE_VERSION }}-cn-v4-resume
           path: artifacts/*.apk
 
       - name: Publish GitHub release
