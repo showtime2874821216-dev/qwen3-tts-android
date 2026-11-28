@@ -21,7 +21,7 @@ permissions:
 
 jobs:
   build-android:
-    name: Build Android APK (CN v6 Resume)
+    name: Build Android APK (CN v7 Final)
     runs-on: ubuntu-latest
 
     steps:
@@ -626,8 +626,8 @@ jobs:
           )
 
           # 2d. ModelPanel 2x3 model selector grid
-          old_settings_call = "        ModelPanel(\n            state = state,\n            onDownload = viewModel::downloadModelResumable,\n            onLoad = viewModel::loadModel,\n        )"
-          new_settings_call = "        ModelPanel(\n            state = state,\n            onSelectModel = viewModel::selectModel,\n            onDownload = viewModel::downloadModel,\n            onLoad = viewModel::loadModel,\n        )"
+          old_settings_call = "        ModelPanel(\n            state = state,\n            onDownload = viewModel::downloadModel,\n            onLoad = viewModel::loadModel,\n        )"
+          new_settings_call = "        ModelPanel(\n            state = state,\n            onSelectModel = viewModel::selectModel,\n            onDownload = viewModel::downloadModelResumable,\n            onLoad = viewModel::loadModel,\n        )"
           assert old_settings_call in s, "SettingsScreen ModelPanel anchor missing"
           s = s.replace(old_settings_call, new_settings_call, 1)
 
@@ -1567,13 +1567,13 @@ jobs:
           "$SDK_DIR/build-tools/36.0.0/apksigner" verify --print-certs app/build/outputs/apk/debug/app-debug.apk
           mkdir -p artifacts
           cp app/build/outputs/apk/debug/app-debug.apk \
-            "artifacts/qwen3-tts-android-${RELEASE_VERSION}-arm64-v8a-cn-v6-resume.apk"
+            "artifacts/qwen3-tts-android-${RELEASE_VERSION}-arm64-v8a-cn-v7-final.apk"
           ls -lh artifacts
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: qwen3-tts-android-${{ env.RELEASE_VERSION }}-cn-v6-resume
+          name: qwen3-tts-android-${{ env.RELEASE_VERSION }}-cn-v7-final
           path: artifacts/*.apk
 
       - name: Publish GitHub release
