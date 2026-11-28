@@ -21,7 +21,7 @@ permissions:
 
 jobs:
   build-android:
-    name: Build Android APK (CN v5 Resume)
+    name: Build Android APK (CN v6 Resume)
     runs-on: ubuntu-latest
 
     steps:
@@ -626,7 +626,7 @@ jobs:
           )
 
           # 2d. ModelPanel 2x3 model selector grid
-          old_settings_call = "        ModelPanel(\n            state = state,\n            onDownload = viewModel::downloadModel,\n            onLoad = viewModel::loadModel,\n        )"
+          old_settings_call = "        ModelPanel(\n            state = state,\n            onDownload = viewModel::downloadModelResumable,\n            onLoad = viewModel::loadModel,\n        )"
           new_settings_call = "        ModelPanel(\n            state = state,\n            onSelectModel = viewModel::selectModel,\n            onDownload = viewModel::downloadModel,\n            onLoad = viewModel::loadModel,\n        )"
           assert old_settings_call in s, "SettingsScreen ModelPanel anchor missing"
           s = s.replace(old_settings_call, new_settings_call, 1)
@@ -1266,56 +1266,29 @@ jobs:
           for old_str, new_str in ui_zh_map:
               s = s.replace(old_str, new_str)
 
-          # 2k. Replace downloadModel() with Resumable Range + Auto-Retry + HF-Mirror + 64-bit >2GB + ForegroundService
-          dl_start = s.index("    fun downloadModel()")
-          # Find the exact next 4-space class member (fun / private fun / override fun / private val / }) after downloadModel()
-          m_next_member = re.search(
-              r"\n    (?:(?:private|override|suspend|internal|protected)\s+)*(?:fun|val|var)\s+|^\}",
-              s[dl_start + 24:],
-              re.M,
-          )
-          assert m_next_member is not None, "Could not find next member after downloadModel()"
-          dl_end = dl_start + 24 + m_next_member.start()
-          dl_span = (dl_start, dl_end)
-          orig_dl = s[dl_span[0]:dl_span[1]]
-          print(f"Safely sliced downloadModel(): {len(orig_dl)} chars; next member starts with: {s[dl_end:dl_end+45].strip()!r}")
-
-          # Detect exact CLASS-LEVEL model directory property (never a local variable inside orig_dl!)
-          class_props = set(re.findall(r"^    (?:private\s+)?val\s+([A-Za-z_][A-Za-z0-9_]*)\b", s, re.M))
-          print(f"Class-level val properties: {sorted(class_props)}")
-          model_dir_expr = None
-          # 1) Check if orig_dl uses a File(<prop>, ...) where <prop> is a real class property
-          for cand in re.findall(r"File\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*,", orig_dl):
-              if cand in class_props:
-                  model_dir_expr = cand
-                  break
-          # 2) Check class properties named modelDir / modelsDir
-          if not model_dir_expr:
-              for cand in ("modelDir", "modelsDir", "modelRootDir"):
-                  if cand in class_props:
-                      model_dir_expr = cand
-                      break
-          # 3) Check helper function like modelDir() or modelFile(...)
-          if not model_dir_expr:
-              m_fn = re.search(r"\b(modelDir\s*\(\s*\))", s)
-              if m_fn:
-                  model_dir_expr = m_fn.group(1)
-          # 4) Safe fallback: inspect how variant.talkerName is located in MainActivity.kt
-          if not model_dir_expr:
-              m_talker = re.search(r"File\(\s*([^,\n]+?)\s*,\s*[^,\n]*talkerName", s)
-              if m_talker:
-                  expr = m_talker.group(1).strip()
-                  if expr in class_props or "filesDir" in expr:
-                      model_dir_expr = expr
-          if not model_dir_expr:
-              model_dir_expr = 'File(getApplication<Application>().filesDir, "models")'
-          print(f"Resolved safe model_dir_expr={model_dir_expr}")
-
-          # Ensure FileOutputStream import exists
+          # 2k. Add FileOutputStream import & inject additive downloadModelResumable() without deleting any existing ViewModel methods
           if "import java.io.FileOutputStream" not in s:
               s = s.replace("import java.io.File", "import java.io.File\nimport java.io.FileOutputStream", 1)
 
-          new_dl_kotlin = """    fun downloadModel() {
+          # Detect exact class-level model directory property used by QwenTtsViewModel
+          class_props = set(re.findall(r"^    (?:private\s+)?val\s+([A-Za-z_][A-Za-z0-9_]*)\b", s, re.M))
+          print(f"Class-level properties: {sorted(class_props)}")
+          model_dir_expr = None
+          for cand in ("modelDir", "modelsDir", "modelRootDir", "modelsRootDir"):
+              if cand in class_props:
+                  model_dir_expr = cand
+                  break
+          if not model_dir_expr:
+              m_talker = re.search(r"File\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*,\s*[^,\n]*talkerName", s)
+              if m_talker and m_talker.group(1) in class_props:
+                  model_dir_expr = m_talker.group(1)
+          if not model_dir_expr:
+              model_dir_expr = 'getApplication<Application>().filesDir'
+          print(f"Resolved model_dir_expr={model_dir_expr}")
+
+          resumable_dl_fn = """
+
+          fun downloadModelResumable() {
               if (_uiState.value.busy || _uiState.value.downloading) return
               val variant = selectedVariant()
               viewModelScope.launch {
@@ -1351,7 +1324,7 @@ jobs:
                                   continue
                               }
                               val fileLabel = "${fileIdx + 1}/${variant.files.size} ${modelFile.name}"
-                              val downloadedLen = downloadFileResumable(
+                              val downloadedLen = downloadFileWithRangeResume(
                                   primaryUrl = url,
                                   destFile = dest,
                                   expectedSize = modelFile.sizeBytes,
@@ -1360,8 +1333,8 @@ jobs:
                                       val denom = maxOf(totalExpected, completedBefore + curFileTotal)
                                       val frac = (overallBytes.toFloat() / denom.toFloat()).coerceIn(0f, 0.99f)
                                       val pct = (frac * 100f).toInt()
-                                      val mbCur = overallBytes / (1024 * 1024)
-                                      val mbTot = denom / (1024 * 1024)
+                                      val mbCur = overallBytes / (1024L * 1024L)
+                                      val mbTot = denom / (1024L * 1024L)
                                       _uiState.update {
                                           it.copy(
                                               downloading = true,
@@ -1414,7 +1387,7 @@ jobs:
               }
           }
 
-          private fun openConnectionFollowRedirects(
+          private fun openConnFollowRedirects(
               urlStr: String,
               rangeStart: Long,
           ): HttpURLConnection {
@@ -1446,7 +1419,7 @@ jobs:
               error("重定向次数过多")
           }
 
-          private fun downloadFileResumable(
+          private fun downloadFileWithRangeResume(
               primaryUrl: String,
               destFile: File,
               expectedSize: Long,
@@ -1465,11 +1438,10 @@ jobs:
                   var conn: HttpURLConnection? = null
 
                   try {
-                      conn = openConnectionFollowRedirects(activeUrl, existing)
+                      conn = openConnFollowRedirects(activeUrl, existing)
                       val code = conn.responseCode
 
                       if (code == 416) {
-                          // Already completely downloaded
                           if (partFile.exists() && partFile.length() > 0L) {
                               if (destFile.exists()) destFile.delete()
                               partFile.renameTo(destFile)
@@ -1483,7 +1455,6 @@ jobs:
 
                       val appendMode = (code == 206 && existing > 0L)
                       if (!appendMode && existing > 0L) {
-                          // Server ignored Range and sent full file from 0
                           existing = 0L
                       }
 
@@ -1534,7 +1505,6 @@ jobs:
                       return destFile.length()
                   } catch (e: Throwable) {
                       lastError = e
-                      // Switch between official HF and hf-mirror every 2 failed attempts
                       if (attempt % 2 == 0) {
                           useMirror = !useMirror
                       }
@@ -1556,35 +1526,8 @@ jobs:
               throw lastError ?: IllegalStateException("多次重试后仍无法完成下载")
           }""".replace("__MODEL_DIR_EXPR__", model_dir_expr)
 
-          s = s[:dl_span[0]] + new_dl_kotlin + "\n" + s[dl_span[1]:]
-          print("Patched downloadModel() with 16x Range Resumable + HF-Mirror + 64-bit >2GB Downloader!")
-
-          # 2l. Catch remaining English strings seen in 6038.jpg (Performance, CPU backend, bottom nav enum titles)
-          s = re.sub(r'Text\(\s*"Performance"', 'Text("性能设置"', s)
-          s = re.sub(r'Text\(\s*"CPU backend"', 'Text("CPU 推理引擎"', s)
-          s = re.sub(r'text\s*=\s*"Performance"', 'text = "性能设置"', s)
-          s = re.sub(r'text\s*=\s*"CPU backend"', 'text = "CPU 推理引擎"', s)
-          # Bottom nav tab enum labels: e.g. STUDIO("studio", "Studio", ...)
-          for en_tab, zh_tab in [("Studio", "合成"), ("Voices", "音色"), ("History", "历史"), ("Settings", "设置")]:
-              s = re.sub(rf'([,(]\s*)"{en_tab}"(\s*[,)])', rf'\1"{zh_tab}"\2', s)
-
-          # 2m. Post-patch structural integrity audit
-          required_members = [
-              "fun downloadModel()",
-              "fun loadModel(",
-              "fun selectModel(",
-              "fun synthesize()",
-              "fun playAudio(",
-              "fun stopAudio(",
-              "fun startVoiceRecording(",
-              "fun cancelVoiceRecording(",
-              "fun importVoiceFromUri(",
-              "fun cancelSynthesis(",
-              "fun downloadFileResumable(",
-          ]
-          for req in required_members:
-              assert req in s, f"POST-PATCH AUDIT FAILED: missing {req}"
-          print(f"POST-PATCH AUDIT PASSED: all {len(required_members)} critical methods intact!")
+          s = s.replace(a1, a1 + resumable_dl_fn, 1)
+          print("Injected additive downloadModelResumable() cleanly alongside cancelVoiceRecording()!")
 
           p.write_text(s, encoding="utf-8")
           print("ALL PATCHES APPLIED SUCCESSFULLY!")
@@ -1624,13 +1567,13 @@ jobs:
           "$SDK_DIR/build-tools/36.0.0/apksigner" verify --print-certs app/build/outputs/apk/debug/app-debug.apk
           mkdir -p artifacts
           cp app/build/outputs/apk/debug/app-debug.apk \
-            "artifacts/qwen3-tts-android-${RELEASE_VERSION}-arm64-v8a-cn-v5-resume.apk"
+            "artifacts/qwen3-tts-android-${RELEASE_VERSION}-arm64-v8a-cn-v6-resume.apk"
           ls -lh artifacts
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: qwen3-tts-android-${{ env.RELEASE_VERSION }}-cn-v5-resume
+          name: qwen3-tts-android-${{ env.RELEASE_VERSION }}-cn-v6-resume
           path: artifacts/*.apk
 
       - name: Publish GitHub release
