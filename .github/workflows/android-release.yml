@@ -21,7 +21,7 @@ permissions:
 
 jobs:
   build-android:
-    name: Build Android APK (CN v2)
+    name: Build Android APK (CN v3 Resume)
     runs-on: ubuntu-latest
 
     steps:
@@ -1266,6 +1266,303 @@ jobs:
           for old_str, new_str in ui_zh_map:
               s = s.replace(old_str, new_str)
 
+          # 2k. Replace downloadModel() with Resumable Range + Auto-Retry + HF-Mirror + 64-bit >2GB + ForegroundService
+          def find_fn_span(src: str, sig_prefix: str):
+              idx = src.find(sig_prefix)
+              if idx == -1:
+                  return None
+              brace_start = src.find("{", idx)
+              if brace_start == -1:
+                  return None
+              depth = 0
+              in_str = False
+              esc = False
+              for i in range(brace_start, len(src)):
+                  ch = src[i]
+                  if in_str:
+                      if esc:
+                          esc = False
+                      elif ch == "\\":
+                          esc = True
+                      elif ch == '"':
+                          in_str = False
+                      continue
+                  if ch == '"':
+                      in_str = True
+                  elif ch == "{":
+                      depth += 1
+                  elif ch == "}":
+                      depth -= 1
+                      if depth == 0:
+                          return (idx, i + 1)
+              return None
+
+          dl_span = find_fn_span(s, "    fun downloadModel()")
+          assert dl_span is not None, "Could not find fun downloadModel() in MainActivity.kt"
+          orig_dl = s[dl_span[0]:dl_span[1]]
+
+          # Detect exact model directory variable name used in original downloadModel()
+          m_dir = re.search(r"File\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*,\s*[A-Za-z_][A-Za-z0-9_]*\.name", orig_dl)
+          model_dir_expr = m_dir.group(1) if m_dir else 'File(getApplication<Application>().filesDir, "models")'
+          print(f"Detected model_dir_expr={model_dir_expr}")
+
+          # Ensure FileOutputStream import exists
+          if "import java.io.FileOutputStream" not in s:
+              s = s.replace("import java.io.File", "import java.io.File\nimport java.io.FileOutputStream", 1)
+
+          new_dl_kotlin = """    fun downloadModel() {
+              if (_uiState.value.busy || _uiState.value.downloading) return
+              val variant = selectedVariant()
+              viewModelScope.launch {
+                  _uiState.update {
+                      it.copy(
+                          busy = true,
+                          downloading = true,
+                          downloadProgress = 0f,
+                          downloadBytes = 0L,
+                          downloadTotalBytes = variant.totalBytes,
+                          status = "准备下载 ${variant.label}...",
+                          error = null,
+                      )
+                  }
+                  com.qwen.tts.android.data.TtsForegroundService.update(
+                      getApplication(),
+                      1,
+                      "正在下载 ${variant.label}（支持断点续传）",
+                  )
+
+                  val outcome = runCatching {
+                      withContext(Dispatchers.IO) {
+                          val dir = __MODEL_DIR_EXPR__
+                          dir.mkdirs()
+                          val totalExpected = variant.files.sumOf { it.sizeBytes }.coerceAtLeast(1L)
+                          var completedBefore = 0L
+
+                          for ((fileIdx, modelFile) in variant.files.withIndex()) {
+                              val url = modelFile.url ?: error("缺少模型下载地址: ${modelFile.name}")
+                              val dest = File(dir, modelFile.name)
+                              if (dest.exists() && dest.length() >= (modelFile.sizeBytes * 0.90).toLong()) {
+                                  completedBefore += dest.length()
+                                  continue
+                              }
+                              val fileLabel = "${fileIdx + 1}/${variant.files.size} ${modelFile.name}"
+                              val downloadedLen = downloadFileResumable(
+                                  primaryUrl = url,
+                                  destFile = dest,
+                                  expectedSize = modelFile.sizeBytes,
+                                  onProgress = { curFileBytes, curFileTotal, note ->
+                                      val overallBytes = completedBefore + curFileBytes
+                                      val denom = maxOf(totalExpected, completedBefore + curFileTotal)
+                                      val frac = (overallBytes.toFloat() / denom.toFloat()).coerceIn(0f, 0.99f)
+                                      val pct = (frac * 100f).toInt()
+                                      val mbCur = overallBytes / (1024 * 1024)
+                                      val mbTot = denom / (1024 * 1024)
+                                      _uiState.update {
+                                          it.copy(
+                                              downloading = true,
+                                              downloadProgress = frac,
+                                              downloadBytes = overallBytes,
+                                              downloadTotalBytes = denom,
+                                              status = "下载 $fileLabel ($mbCur/${mbTot}MB) $note",
+                                          )
+                                      }
+                                      com.qwen.tts.android.data.TtsForegroundService.update(
+                                          getApplication(),
+                                          pct,
+                                          "下载 ${variant.label}: $mbCur/${mbTot}MB $note",
+                                      )
+                                  },
+                              )
+                              completedBefore += downloadedLen
+                          }
+                      }
+                  }
+
+                  com.qwen.tts.android.data.TtsForegroundService.stop(getApplication())
+
+                  outcome.fold(
+                      onSuccess = {
+                          _uiState.update {
+                              it.copy(
+                                  busy = false,
+                                  downloading = false,
+                                  downloadProgress = 1f,
+                                  downloadBytes = variant.totalBytes,
+                                  downloadTotalBytes = variant.totalBytes,
+                                  modelReady = true,
+                                  status = "模型下载完成，可点击加载模型",
+                                  error = null,
+                              )
+                          }
+                      },
+                      onFailure = { throwable ->
+                          _uiState.update {
+                              it.copy(
+                                  busy = false,
+                                  downloading = false,
+                                  status = "下载中断（已保留进度，再点下载可续传）",
+                                  error = "下载中断（已保留断点，点下载继续）: ${throwable.message ?: "网络异常"}",
+                              )
+                          }
+                      },
+                  )
+              }
+          }
+
+          private fun openConnectionFollowRedirects(
+              urlStr: String,
+              rangeStart: Long,
+          ): HttpURLConnection {
+              var currentUrl = urlStr
+              var hops = 0
+              while (hops < 8) {
+                  val conn = (URL(currentUrl).openConnection() as HttpURLConnection).apply {
+                      instanceFollowRedirects = false
+                      connectTimeout = 30_000
+                      readTimeout = 45_000
+                      requestMethod = "GET"
+                      setRequestProperty("User-Agent", "Qwen3TTS-Android/0.2")
+                      setRequestProperty("Accept-Encoding", "identity")
+                      if (rangeStart > 0L) {
+                          setRequestProperty("Range", "bytes=$rangeStart-")
+                      }
+                  }
+                  val code = conn.responseCode
+                  if (code in listOf(301, 302, 303, 307, 308)) {
+                      val loc = conn.getHeaderField("Location")
+                          ?: error("HTTP $code 缺少重定向地址")
+                      conn.disconnect()
+                      currentUrl = URL(URL(currentUrl), loc).toString()
+                      hops++
+                      continue
+                  }
+                  return conn
+              }
+              error("重定向次数过多")
+          }
+
+          private fun downloadFileResumable(
+              primaryUrl: String,
+              destFile: File,
+              expectedSize: Long,
+              onProgress: (Long, Long, String) -> Unit,
+          ): Long {
+              val partFile = File(destFile.parentFile, "${destFile.name}.part")
+              val mirrorUrl = primaryUrl.replace("https://huggingface.co/", "https://hf-mirror.com/")
+              val maxAttempts = 16
+              var lastError: Throwable? = null
+              var useMirror = false
+
+              for (attempt in 1..maxAttempts) {
+                  val activeUrl = if (useMirror && mirrorUrl != primaryUrl) mirrorUrl else primaryUrl
+                  val sourceTag = if (useMirror) "[镜像线路]" else "[官方线路]"
+                  var existing = if (partFile.exists()) partFile.length() else 0L
+                  var conn: HttpURLConnection? = null
+
+                  try {
+                      conn = openConnectionFollowRedirects(activeUrl, existing)
+                      val code = conn.responseCode
+
+                      if (code == 416) {
+                          // Already completely downloaded
+                          if (partFile.exists() && partFile.length() > 0L) {
+                              if (destFile.exists()) destFile.delete()
+                              partFile.renameTo(destFile)
+                              return destFile.length()
+                          }
+                      }
+
+                      if (code != 200 && code != 206) {
+                          error("HTTP $code")
+                      }
+
+                      val appendMode = (code == 206 && existing > 0L)
+                      if (!appendMode && existing > 0L) {
+                          // Server ignored Range and sent full file from 0
+                          existing = 0L
+                      }
+
+                      val contentLen = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                          conn.contentLengthLong
+                      } else {
+                          conn.getHeaderField("Content-Length")?.toLongOrNull() ?: -1L
+                      }
+                      val totalLen = when {
+                          appendMode && contentLen > 0L -> existing + contentLen
+                          !appendMode && contentLen > 0L -> contentLen
+                          else -> expectedSize
+                      }
+
+                      onProgress(existing, totalLen, if (attempt > 1) "$sourceTag 续传第${attempt}次" else sourceTag)
+
+                      val buf = ByteArray(128 * 1024)
+                      var downloaded = existing
+                      var lastReportMs = 0L
+
+                      conn.inputStream.use { input ->
+                          FileOutputStream(partFile, appendMode).use { output ->
+                              while (true) {
+                                  val read = input.read(buf)
+                                  if (read <= 0) break
+                                  output.write(buf, 0, read)
+                                  downloaded += read
+                                  val now = SystemClock.elapsedRealtime()
+                                  if (now - lastReportMs >= 400L) {
+                                      lastReportMs = now
+                                      onProgress(downloaded, totalLen, sourceTag)
+                                  }
+                              }
+                              output.flush()
+                          }
+                      }
+
+                      if (contentLen > 0L && downloaded < totalLen) {
+                          throw java.io.EOFException("连接提前断开 ($downloaded / $totalLen)")
+                      }
+
+                      if (destFile.exists()) destFile.delete()
+                      if (!partFile.renameTo(destFile)) {
+                          partFile.copyTo(destFile, overwrite = true)
+                          partFile.delete()
+                      }
+                      onProgress(destFile.length(), destFile.length(), "完成")
+                      return destFile.length()
+                  } catch (e: Throwable) {
+                      lastError = e
+                      // Switch between official HF and hf-mirror every 2 failed attempts
+                      if (attempt % 2 == 0) {
+                          useMirror = !useMirror
+                      }
+                      val waitMs = (attempt * 1500L).coerceAtMost(6000L)
+                      onProgress(
+                          if (partFile.exists()) partFile.length() else 0L,
+                          expectedSize,
+                          "断开重连中(${attempt}/$maxAttempts)...",
+                      )
+                      try {
+                          Thread.sleep(waitMs)
+                      } catch (_: InterruptedException) {
+                          throw e
+                      }
+                  } finally {
+                      runCatching { conn?.disconnect() }
+                  }
+              }
+              throw lastError ?: IllegalStateException("多次重试后仍无法完成下载")
+          }""".replace("__MODEL_DIR_EXPR__", model_dir_expr)
+
+          s = s[:dl_span[0]] + new_dl_kotlin + s[dl_span[1]:]
+          print("Patched downloadModel() with 16x Range Resumable + HF-Mirror + 64-bit >2GB Downloader!")
+
+          # 2l. Catch remaining English strings seen in 6038.jpg (Performance, CPU backend, bottom nav enum titles)
+          s = re.sub(r'Text\(\s*"Performance"', 'Text("性能设置"', s)
+          s = re.sub(r'Text\(\s*"CPU backend"', 'Text("CPU 推理引擎"', s)
+          s = re.sub(r'text\s*=\s*"Performance"', 'text = "性能设置"', s)
+          s = re.sub(r'text\s*=\s*"CPU backend"', 'text = "CPU 推理引擎"', s)
+          # Bottom nav tab enum labels: e.g. STUDIO("studio", "Studio", ...)
+          for en_tab, zh_tab in [("Studio", "合成"), ("Voices", "音色"), ("History", "历史"), ("Settings", "设置")]:
+              s = re.sub(rf'([,(]\s*)"{en_tab}"(\s*[,)])', rf'\1"{zh_tab}"\2', s)
+
           p.write_text(s, encoding="utf-8")
           print("ALL PATCHES APPLIED SUCCESSFULLY!")
           PY
@@ -1304,13 +1601,13 @@ jobs:
           "$SDK_DIR/build-tools/36.0.0/apksigner" verify --print-certs app/build/outputs/apk/debug/app-debug.apk
           mkdir -p artifacts
           cp app/build/outputs/apk/debug/app-debug.apk \
-            "artifacts/qwen3-tts-android-${RELEASE_VERSION}-arm64-v8a-cn-v2.apk"
+            "artifacts/qwen3-tts-android-${RELEASE_VERSION}-arm64-v8a-cn-v3-resume.apk"
           ls -lh artifacts
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: qwen3-tts-android-${{ env.RELEASE_VERSION }}-cn-v2
+          name: qwen3-tts-android-${{ env.RELEASE_VERSION }}-cn-v3-resume
           path: artifacts/*.apk
 
       - name: Publish GitHub release
@@ -1318,7 +1615,7 @@ jobs:
         with:
           tag_name: v${{ env.RELEASE_VERSION }}
           target_commitish: ${{ github.sha }}
-          name: Qwen3 TTS Android ${{ env.RELEASE_VERSION }} 中文旗舰版
+          name: Qwen3 TTS Android ${{ env.RELEASE_VERSION }} 中文旗舰版 (断点续传)
           body: |
             Chinese UI, auto 0.6B/1.7B speaker embedding adapter, background ForegroundService keep-alive, visual progress bar + cancel button, 6 official Qwen3-TTS GGUF models, locked Gradle permanent signing key + auto versionCode bump, and anti-runaway 32-char chunking.
           prerelease: ${{ github.event_name == 'workflow_dispatch' && inputs.prerelease || false }}
