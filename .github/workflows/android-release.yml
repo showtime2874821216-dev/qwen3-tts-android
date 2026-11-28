@@ -21,7 +21,7 @@ permissions:
 
 jobs:
   build-android:
-    name: Build Android APK (CN v4 Resume)
+    name: Build Android APK (CN v5 Resume)
     runs-on: ubuntu-latest
 
     steps:
@@ -1267,41 +1267,18 @@ jobs:
               s = s.replace(old_str, new_str)
 
           # 2k. Replace downloadModel() with Resumable Range + Auto-Retry + HF-Mirror + 64-bit >2GB + ForegroundService
-          def find_fn_span(src: str, sig_prefix: str):
-              idx = src.find(sig_prefix)
-              if idx == -1:
-                  return None
-              brace_start = src.find("{", idx)
-              if brace_start == -1:
-                  return None
-              depth = 0
-              in_str = False
-              esc = False
-              for i in range(brace_start, len(src)):
-                  ch = src[i]
-                  if in_str:
-                      if esc:
-                          esc = False
-                      elif ch == "\\":
-                          esc = True
-                      elif ch == '"':
-                          in_str = False
-                      continue
-                  if ch == "'" and i + 2 < len(src) and (src[i + 2] == "'" or (src[i + 1] == "\\" and i + 3 < len(src) and src[i + 3] == "'")):
-                      continue
-                  if ch == '"':
-                      in_str = True
-                  elif ch == "{":
-                      depth += 1
-                  elif ch == "}":
-                      depth -= 1
-                      if depth == 0:
-                          return (idx, i + 1)
-              return None
-
-          dl_span = find_fn_span(s, "    fun downloadModel()")
-          assert dl_span is not None, "Could not find fun downloadModel() in MainActivity.kt"
+          dl_start = s.index("    fun downloadModel()")
+          # Find the exact next 4-space class member (fun / private fun / override fun / private val / }) after downloadModel()
+          m_next_member = re.search(
+              r"\n    (?:(?:private|override|suspend|internal|protected)\s+)*(?:fun|val|var)\s+|^\}",
+              s[dl_start + 24:],
+              re.M,
+          )
+          assert m_next_member is not None, "Could not find next member after downloadModel()"
+          dl_end = dl_start + 24 + m_next_member.start()
+          dl_span = (dl_start, dl_end)
           orig_dl = s[dl_span[0]:dl_span[1]]
+          print(f"Safely sliced downloadModel(): {len(orig_dl)} chars; next member starts with: {s[dl_end:dl_end+45].strip()!r}")
 
           # Detect exact CLASS-LEVEL model directory property (never a local variable inside orig_dl!)
           class_props = set(re.findall(r"^    (?:private\s+)?val\s+([A-Za-z_][A-Za-z0-9_]*)\b", s, re.M))
@@ -1579,7 +1556,7 @@ jobs:
               throw lastError ?: IllegalStateException("多次重试后仍无法完成下载")
           }""".replace("__MODEL_DIR_EXPR__", model_dir_expr)
 
-          s = s[:dl_span[0]] + new_dl_kotlin + s[dl_span[1]:]
+          s = s[:dl_span[0]] + new_dl_kotlin + "\n" + s[dl_span[1]:]
           print("Patched downloadModel() with 16x Range Resumable + HF-Mirror + 64-bit >2GB Downloader!")
 
           # 2l. Catch remaining English strings seen in 6038.jpg (Performance, CPU backend, bottom nav enum titles)
@@ -1590,6 +1567,24 @@ jobs:
           # Bottom nav tab enum labels: e.g. STUDIO("studio", "Studio", ...)
           for en_tab, zh_tab in [("Studio", "合成"), ("Voices", "音色"), ("History", "历史"), ("Settings", "设置")]:
               s = re.sub(rf'([,(]\s*)"{en_tab}"(\s*[,)])', rf'\1"{zh_tab}"\2', s)
+
+          # 2m. Post-patch structural integrity audit
+          required_members = [
+              "fun downloadModel()",
+              "fun loadModel(",
+              "fun selectModel(",
+              "fun synthesize()",
+              "fun playAudio(",
+              "fun stopAudio(",
+              "fun startVoiceRecording(",
+              "fun cancelVoiceRecording(",
+              "fun importVoiceFromUri(",
+              "fun cancelSynthesis(",
+              "fun downloadFileResumable(",
+          ]
+          for req in required_members:
+              assert req in s, f"POST-PATCH AUDIT FAILED: missing {req}"
+          print(f"POST-PATCH AUDIT PASSED: all {len(required_members)} critical methods intact!")
 
           p.write_text(s, encoding="utf-8")
           print("ALL PATCHES APPLIED SUCCESSFULLY!")
@@ -1629,13 +1624,13 @@ jobs:
           "$SDK_DIR/build-tools/36.0.0/apksigner" verify --print-certs app/build/outputs/apk/debug/app-debug.apk
           mkdir -p artifacts
           cp app/build/outputs/apk/debug/app-debug.apk \
-            "artifacts/qwen3-tts-android-${RELEASE_VERSION}-arm64-v8a-cn-v4-resume.apk"
+            "artifacts/qwen3-tts-android-${RELEASE_VERSION}-arm64-v8a-cn-v5-resume.apk"
           ls -lh artifacts
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: qwen3-tts-android-${{ env.RELEASE_VERSION }}-cn-v4-resume
+          name: qwen3-tts-android-${{ env.RELEASE_VERSION }}-cn-v5-resume
           path: artifacts/*.apk
 
       - name: Publish GitHub release
