@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Release version, for example 0.1.0. Defaults to the tag name without v."
+        description: "Release version, for example 0.2.0. Defaults to auto run number."
         required: false
         type: string
       prerelease:
@@ -21,7 +21,7 @@ permissions:
 
 jobs:
   build-android:
-    name: Build Android APK
+    name: Build Android APK (CN v2)
     runs-on: ubuntu-latest
 
     steps:
@@ -35,13 +35,62 @@ jobs:
           git submodule sync --recursive
           git submodule update --init --recursive --depth=1
 
-      - name: Install Permanent Fixed Signing Keystore
+      - name: Resolve release version
+        run: |
+          version="${{ inputs.version }}"
+          if [ -z "$version" ]; then
+            if [ "${{ github.ref_type }}" = "tag" ]; then
+              version="${{ github.ref_name }}"
+            else
+              version="0.2.${{ github.run_number }}"
+            fi
+          fi
+          release_version="${version#v}"
+          echo "RELEASE_VERSION=$release_version" >> "$GITHUB_ENV"
+
+      - name: Install Permanent Fixed Signing Keystore & Lock Gradle Signing + VersionCode
         run: |
           mkdir -p "$HOME/.android"
-          base64 -d << 'KS_EOF' > "$HOME/.android/debug.keystore"
+          base64 -d << 'KS_EOF' > app/personal_fixed.keystore
           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
           KS_EOF
-          ls -lh "$HOME/.android/debug.keystore"
+          cp app/personal_fixed.keystore "$HOME/.android/debug.keystore"
+          ls -lh app/personal_fixed.keystore "$HOME/.android/debug.keystore"
+
+          python3 - << 'PY'
+          import os, re
+          from pathlib import Path
+
+          gradle_path = Path("app/build.gradle.kts")
+          gs = gradle_path.read_text(encoding="utf-8")
+
+          # 1. Auto-bump versionCode & versionName so Android always treats new builds as upgrades
+          run_num = int(os.environ.get("GITHUB_RUN_NUMBER", "1"))
+          ver_code = 200 + run_num
+          ver_name = os.environ.get("RELEASE_VERSION", f"0.2.{run_num}")
+          gs = re.sub(r"versionCode\s*=\s*\d+", f"versionCode = {ver_code}", gs, count=1)
+          gs = re.sub(r'versionName\s*=\s*"[^"]*"', f'versionName = "{ver_name}"', gs, count=1)
+
+          # 2. Explicitly bind debug signingConfig to app/personal_fixed.keystore so Gradle NEVER generates a random key
+          signing_block = """
+              signingConfigs {
+                  getByName("debug") {
+                      storeFile = file("personal_fixed.keystore")
+                      storePassword = "android"
+                      keyAlias = "androiddebugkey"
+                      keyPassword = "android"
+                  }
+              }
+          """
+          if 'personal_fixed.keystore' not in gs:
+              m_android = re.search(r"android\s*\{", gs)
+              assert m_android, "Could not find android { in app/build.gradle.kts"
+              pos = m_android.end()
+              gs = gs[:pos] + "\n" + signing_block + gs[pos:]
+
+          gradle_path.write_text(gs, encoding="utf-8")
+          print(f"Patched app/build.gradle.kts: versionCode={ver_code}, versionName={ver_name}, locked personal_fixed.keystore!")
+          PY
 
       - name: Optimize Native CMake for Snapdragon 8 Elite (SM8750)
         run: |
@@ -73,9 +122,9 @@ jobs:
               print("CMakeLists.txt patched with Release + SM8750 SIMD!")
           PY
 
-      - name: Inject AudioImporter + Anti-Runaway Unlimited Chunking + Multi-Model Upgrade
+      - name: Inject Background Service + Chinese UI + Auto-Embedding + 6 Models + Progress Bar
         run: |
-          cat << 'EOF' > app/src/main/java/com/qwen/tts/android/data/AudioImporter.kt
+          cat << 'AUDIO_EOF' > app/src/main/java/com/qwen/tts/android/data/AudioImporter.kt
           package com.qwen.tts.android.data
 
           import android.content.Context
@@ -294,13 +343,171 @@ jobs:
                   out.write(bb.array())
               }
           }
-          EOF
+          AUDIO_EOF
+
+          cat << 'SVC_EOF' > app/src/main/java/com/qwen/tts/android/data/TtsForegroundService.kt
+          package com.qwen.tts.android.data
+
+          import android.app.Notification
+          import android.app.NotificationChannel
+          import android.app.NotificationManager
+          import android.app.Service
+          import android.content.Context
+          import android.content.Intent
+          import android.content.pm.ServiceInfo
+          import android.os.Build
+          import android.os.IBinder
+          import android.os.PowerManager
+
+          class TtsForegroundService : Service() {
+              private var wakeLock: PowerManager.WakeLock? = null
+
+              override fun onBind(intent: Intent?): IBinder? = null
+
+              override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+                  val action = intent?.action
+                  if (action == ACTION_STOP) {
+                      releaseWakeLock()
+                      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                          stopForeground(STOP_FOREGROUND_REMOVE)
+                      } else {
+                          @Suppress("DEPRECATION")
+                          stopForeground(true)
+                      }
+                      stopSelf()
+                      return START_NOT_STICKY
+                  }
+
+                  val progress = intent?.getIntExtra(EXTRA_PROGRESS, 0) ?: 0
+                  val status = intent?.getStringExtra(EXTRA_STATUS) ?: "正在后台生成语音..."
+                  ensureChannel()
+                  acquireWakeLock()
+
+                  val notification = buildNotification(progress, status)
+                  runCatching {
+                      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                          startForeground(NOTIF_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+                      } else {
+                          startForeground(NOTIF_ID, notification)
+                      }
+                  }
+                  return START_STICKY
+              }
+
+              override fun onDestroy() {
+                  releaseWakeLock()
+                  super.onDestroy()
+              }
+
+              private fun ensureChannel() {
+                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                      val nm = getSystemService(NotificationManager::class.java)
+                      val existing = nm.getNotificationChannel(CHANNEL_ID)
+                      if (existing == null) {
+                          val ch = NotificationChannel(
+                              CHANNEL_ID,
+                              "后台语音生成进度",
+                              NotificationManager.IMPORTANCE_LOW,
+                          )
+                          ch.description = "保持语音合成在切到后台时持续运行"
+                          nm.createNotificationChannel(ch)
+                      }
+                  }
+              }
+
+              private fun buildNotification(progress: Int, status: String): Notification {
+                  val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                      Notification.Builder(this, CHANNEL_ID)
+                  } else {
+                      @Suppress("DEPRECATION")
+                      Notification.Builder(this)
+                  }
+                  return builder
+                      .setContentTitle("Qwen3 TTS 后台生成中 (${progress.coerceIn(0, 100)}%)")
+                      .setContentText(status)
+                      .setSmallIcon(android.R.drawable.ic_btn_speak_now)
+                      .setOngoing(true)
+                      .setOnlyAlertOnce(true)
+                      .setProgress(100, progress.coerceIn(0, 100), progress <= 0)
+                      .build()
+              }
+
+              private fun acquireWakeLock() {
+                  if (wakeLock?.isHeld == true) return
+                  runCatching {
+                      val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+                      wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Qwen3TTS:SynthWakeLock").apply {
+                          setReferenceCounted(false)
+                          acquire(60 * 60 * 1000L)
+                      }
+                  }
+              }
+
+              private fun releaseWakeLock() {
+                  runCatching {
+                      if (wakeLock?.isHeld == true) wakeLock?.release()
+                  }
+                  wakeLock = null
+              }
+
+              companion object {
+                  private const val CHANNEL_ID = "qwen_tts_bg_synth"
+                  private const val NOTIF_ID = 10086
+                  private const val ACTION_UPDATE = "com.qwen.tts.android.BG_UPDATE"
+                  private const val ACTION_STOP = "com.qwen.tts.android.BG_STOP"
+                  private const val EXTRA_PROGRESS = "progress"
+                  private const val EXTRA_STATUS = "status"
+
+                  fun update(context: Context, progress: Int, status: String) {
+                      runCatching {
+                          val i = Intent(context, TtsForegroundService::class.java).apply {
+                              action = ACTION_UPDATE
+                              putExtra(EXTRA_PROGRESS, progress)
+                              putExtra(EXTRA_STATUS, status)
+                          }
+                          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                              context.startForegroundService(i)
+                          } else {
+                              context.startService(i)
+                          }
+                      }
+                  }
+
+                  fun stop(context: Context) {
+                      runCatching {
+                          val i = Intent(context, TtsForegroundService::class.java).apply {
+                              action = ACTION_STOP
+                          }
+                          context.startService(i)
+                      }
+                  }
+              }
+          }
+          SVC_EOF
 
           python3 - << 'PY'
           import re
           from pathlib import Path
 
-          # 1. Inspect QwenEngine.kt to detect exact NativeParams fields (e.g. maxAudioTokens, repetitionPenalty)
+          # 0. Patch AndroidManifest.xml for Foreground Service & WakeLock
+          manifest_path = Path("app/src/main/AndroidManifest.xml")
+          ms = manifest_path.read_text(encoding="utf-8")
+          perms = [
+              '    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />',
+              '    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />',
+              '    <uses-permission android:name="android.permission.WAKE_LOCK" />',
+              '    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />',
+          ]
+          for perm in perms:
+              if perm.strip() not in ms:
+                  ms = ms.replace("<application", perm + "\n    <application", 1)
+          svc_decl = '        <service\n            android:name=".data.TtsForegroundService"\n            android:exported="false"\n            android:foregroundServiceType="dataSync" />\n'
+          if "TtsForegroundService" not in ms:
+              ms = ms.replace("</application>", svc_decl + "    </application>", 1)
+          manifest_path.write_text(ms, encoding="utf-8")
+          print("AndroidManifest.xml patched with ForegroundService + WakeLock!")
+
+          # 1. Inspect QwenEngine.kt to detect exact NativeParams fields
           engine_path = Path("app/src/main/java/com/qwen/tts/studio/engine/QwenEngine.kt")
           engine_src = engine_path.read_text(encoding="utf-8")
           m_np = re.search(r"data\s+class\s+NativeParams\s*\(([^)]*)\)", engine_src, re.S)
@@ -329,31 +536,96 @@ jobs:
           p = Path("app/src/main/java/com/qwen/tts/android/MainActivity.kt")
           s = p.read_text(encoding="utf-8")
 
+          # 2a. Localize Language options
+          lang_repls = [
+              ('LanguageOption("English", 2050)', 'LanguageOption("英语 (English)", 2050)'),
+              ('LanguageOption("German", 2053)', 'LanguageOption("德语 (German)", 2053)'),
+              ('LanguageOption("Spanish", 2054)', 'LanguageOption("西班牙语 (Spanish)", 2054)'),
+              ('LanguageOption("French", 2061)', 'LanguageOption("法语 (French)", 2061)'),
+              ('LanguageOption("Chinese", 2055)', 'LanguageOption("中文 (Chinese)", 2055)'),
+              ('LanguageOption("Japanese", 2058)', 'LanguageOption("日语 (Japanese)", 2058)'),
+              ('LanguageOption("Korean", 2064)', 'LanguageOption("韩语 (Korean)", 2064)'),
+              ('LanguageOption("Russian", 2069)', 'LanguageOption("俄语 (Russian)", 2069)'),
+          ]
+          for a, b in lang_repls:
+              s = s.replace(a, b)
+
+          # 2b. Add 6 official Serveurperso/Qwen3-TTS-GGUF Base voice-cloning models
           old_variants = "    val variants = listOf(defaultVariant)"
           new_variants = """    val q8Variant: ModelVariant = variant(
               id = "q8_0",
               label = "0.6B Q8",
-              displayName = "Qwen3-TTS 0.6B Q8_0 (高音质推荐)",
+              displayName = "Qwen3-TTS 0.6B Q8_0 (均衡推荐 · 1.28GB)",
               talkerName = "qwen-talker-0.6b-base-Q8_0.gguf",
               tokenizerName = "qwen-tokenizer-12hz-Q8_0.gguf",
-              talkerSizeBytes = 980_000_000L,
-              tokenizerSizeBytes = 285_000_000L,
+              talkerSizeBytes = 993_000_000L,
+              tokenizerSizeBytes = 291_000_000L,
+          )
+
+          val bf16_06bVariant: ModelVariant = variant(
+              id = "0.6b_bf16",
+              label = "0.6B BF16",
+              displayName = "Qwen3-TTS 0.6B BF16 (轻量无损 · 2.20GB)",
+              talkerName = "qwen-talker-0.6b-base-BF16.gguf",
+              tokenizerName = "qwen-tokenizer-12hz-BF16.gguf",
+              talkerSizeBytes = 1_840_000_000L,
+              tokenizerSizeBytes = 359_000_000L,
           )
 
           val talker17bQ4Variant: ModelVariant = variant(
               id = "1.7b_q4_k_m",
               label = "1.7B Q4",
-              displayName = "Qwen3-TTS 1.7B Q4_K_M (旗舰戏感)",
+              displayName = "Qwen3-TTS 1.7B Q4_K_M (旗舰戏感 · 1.48GB)",
               talkerName = "qwen-talker-1.7b-base-Q4_K_M.gguf",
               tokenizerName = "qwen-tokenizer-12hz-Q4_K_M.gguf",
-              talkerSizeBytes = 1_190_000_000L,
+              talkerSizeBytes = 1_220_000_000L,
               tokenizerSizeBytes = 254_974_752L,
           )
 
-          val variants = listOf(defaultVariant, q8Variant, talker17bQ4Variant)"""
+          val talker17bQ8Variant: ModelVariant = variant(
+              id = "1.7b_q8_0",
+              label = "1.7B Q8",
+              displayName = "Qwen3-TTS 1.7B Q8_0 (旗舰高音质 · 2.37GB)",
+              talkerName = "qwen-talker-1.7b-base-Q8_0.gguf",
+              tokenizerName = "qwen-tokenizer-12hz-Q8_0.gguf",
+              talkerSizeBytes = 2_080_000_000L,
+              tokenizerSizeBytes = 291_000_000L,
+          )
+
+          val talker17bBf16Variant: ModelVariant = variant(
+              id = "1.7b_bf16",
+              label = "1.7B BF16",
+              displayName = "Qwen3-TTS 1.7B BF16 (满血原版 · 4.24GB)",
+              talkerName = "qwen-talker-1.7b-base-BF16.gguf",
+              tokenizerName = "qwen-tokenizer-12hz-BF16.gguf",
+              talkerSizeBytes = 3_880_000_000L,
+              tokenizerSizeBytes = 359_000_000L,
+          )
+
+          val variants = listOf(
+              defaultVariant,
+              q8Variant,
+              bf16_06bVariant,
+              talker17bQ4Variant,
+              talker17bQ8Variant,
+              talker17bBf16Variant,
+          )"""
           assert old_variants in s, "variants anchor missing"
           s = s.replace(old_variants, new_variants, 1)
 
+          s = s.replace('label = "Q4_K_M",', 'label = "0.6B Q4",', 1)
+          s = s.replace('displayName = "Qwen3-TTS 0.6B Q4_K_M",', 'displayName = "Qwen3-TTS 0.6B Q4_K_M (极速轻量 · 884MB)",', 1)
+
+          # 2c. Add overallProgress & synthesizing fields to QwenTtsUiState
+          ui_state_anchor = "    val synthesisFrames: Int = 0,"
+          assert ui_state_anchor in s, "QwenTtsUiState synthesisFrames anchor missing"
+          s = s.replace(
+              ui_state_anchor,
+              "    val synthesisFrames: Int = 0,\n    val overallProgress: Float = 0f,\n    val synthesizing: Boolean = false,",
+              1,
+          )
+
+          # 2d. ModelPanel 2x3 model selector grid
           old_settings_call = "        ModelPanel(\n            state = state,\n            onDownload = viewModel::downloadModel,\n            onLoad = viewModel::loadModel,\n        )"
           new_settings_call = "        ModelPanel(\n            state = state,\n            onSelectModel = viewModel::selectModel,\n            onDownload = viewModel::downloadModel,\n            onLoad = viewModel::loadModel,\n        )"
           assert old_settings_call in s, "SettingsScreen ModelPanel anchor missing"
@@ -365,14 +637,21 @@ jobs:
           s = s.replace(old_model_panel, new_model_panel, 1)
 
           old_model_dl = "            if (state.downloading) {"
-          model_chips = """            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                          QwenModel.variants.forEach { v ->
-                              FilterChip(
-                                  selected = state.selectedModelId == v.id,
-                                  onClick = { onSelectModel(v.id) },
-                                  enabled = !state.busy,
-                                  label = { Text(v.label) },
-                              )
+          model_chips = """            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                          QwenModel.variants.chunked(3).forEach { rowVariants ->
+                              Row(
+                                  modifier = Modifier.fillMaxWidth(),
+                                  horizontalArrangement = Arrangement.spacedBy(8.dp),
+                              ) {
+                                  rowVariants.forEach { v ->
+                                      FilterChip(
+                                          selected = state.selectedModelId == v.id,
+                                          onClick = { onSelectModel(v.id) },
+                                          enabled = !state.busy,
+                                          label = { Text(v.label, maxLines = 1) },
+                                      )
+                                  }
+                              }
                           }
                       }
 
@@ -380,52 +659,119 @@ jobs:
           assert old_model_dl in s, "ModelPanel downloading anchor missing"
           s = s.replace(old_model_dl, model_chips, 1)
 
+          # 2e. Add 8 threads option
           old_threads = "listOf(4, 6).forEach { threads ->"
           assert old_threads in s, "threads anchor missing"
           s = s.replace(old_threads, "listOf(4, 6, 8).forEach { threads ->", 1)
 
+          # 2f. Replace synthesize() with Auto-Embedding-Dimension Fix + ForegroundService + Real Progress + Cancel
           synth_start = s.index("    fun synthesize() {")
           synth_end = s.index("    fun startVoiceRecording() {")
-          new_synth = """    fun synthesize() {
+          new_synth = """    @Volatile
+          private var synthCancelled = false
+          private var synthJob: Job? = null
+
+          fun cancelSynthesis() {
+              synthCancelled = true
+              synthJob?.cancel()
+              com.qwen.tts.android.data.TtsForegroundService.stop(getApplication())
+              stopBusyTicker()
+              _uiState.update {
+                  it.copy(
+                      busy = false,
+                      synthesizing = false,
+                      overallProgress = 0f,
+                      status = "已取消生成",
+                      error = null,
+                  )
+              }
+          }
+
+          fun synthesize() {
               val text = _uiState.value.text.trim()
               if (text.isEmpty() || _uiState.value.busy) return
-              viewModelScope.launch {
+              synthCancelled = false
+              synthJob = viewModelScope.launch {
                   val variant = selectedVariant()
                   val selectedVoice = _uiState.value.selectedVoiceId?.let { id -> voices.value.firstOrNull { it.voiceId == id } }
                   val chunks = splitLongTextUnlimited(text)
                   val estimate = estimateSynthesisMillis(text)
                   startBusy(status = "共 ${chunks.size} 段 · 准备生成", resetSynthesis = true, synthesisEstimate = estimate)
+                  _uiState.update { it.copy(synthesizing = true, overallProgress = 0.02f) }
+                  com.qwen.tts.android.data.TtsForegroundService.update(getApplication(), 2, "准备生成（共 ${chunks.size} 段）")
 
                   val result = runCatching {
                       withContext(Dispatchers.IO) {
                           val native = ensureEngineLoaded(variant)
+
+                          // Auto-resolve speaker embedding matching current model size (0.6B=1024d vs 1.7B=2048d)
+                          val activeEmbeddingPath: String? = if (selectedVoice != null) {
+                              val sizeTag = if (variant.id.contains("1.7b")) "1.7b" else "0.6b"
+                              val voiceFolder = File(selectedVoice.speakerEmbeddingPath).parentFile
+                              val compatFile = if (voiceFolder != null) File(voiceFolder, "speaker_${sizeTag}.json") else File(selectedVoice.speakerEmbeddingPath)
+                              if (!compatFile.exists() || compatFile.length() < 64L) {
+                                  _uiState.update { it.copy(status = "正在为 ${variant.label} 自动适配声纹...", overallProgress = 0.04f) }
+                                  com.qwen.tts.android.data.TtsForegroundService.update(getApplication(), 4, "正在自动适配 ${variant.label} 声纹...")
+                                  val refFile = File(selectedVoice.referenceWavPath)
+                                  if (refFile.exists()) {
+                                      if (!native.extractSpeakerEmbedding(refFile.absolutePath, compatFile.absolutePath)) {
+                                          error(native.getLastError() ?: "自动适配声纹失败，请重新导入该音色")
+                                      }
+                                      compatFile.absolutePath
+                                  } else {
+                                      selectedVoice.speakerEmbeddingPath
+                                  }
+                              } else {
+                                  compatFile.absolutePath
+                              }
+                          } else {
+                              null
+                          }
+
                           val allChunks = ArrayList<FloatArray>(chunks.size)
                           var sampleRate = 24_000
                           var totalMs = 0L
                           var completedFrames = 0
 
-                          fun synthOnePiece(piece: String, label: String, repPenalty: Float): Pair<FloatArray, Int> {
+                          fun synthOnePiece(piece: String, chunkIdx: Int, totalChunks: Int, label: String, repPenalty: Float): Pair<FloatArray, Int> {
+                              if (synthCancelled) throw kotlinx.coroutines.CancellationException("用户取消生成")
                               val tokenCap = computeSafeMaxAudioTokens(piece)
+                              val expectedFrames = (tokenCap * 0.62f).toInt().coerceAtLeast(32)
                               val baseFrames = completedFrames
                               var peakFrames = 0
+                              var lastNotifPct = -1
                               native.setProgressCallback { frames, maxTokens ->
                                   if (frames > peakFrames) peakFrames = frames
+                                  val chunkFrac = (frames.toFloat() / expectedFrames.toFloat()).coerceIn(0f, 0.95f)
+                                  val overall = ((chunkIdx.toFloat() + chunkFrac) / totalChunks.toFloat()).coerceIn(0.05f, 0.98f)
+                                  val pct = (overall * 100f).toInt()
+                                  val statusText = "$label · ${pct}%"
                                   _uiState.update {
                                       it.copy(
                                           loaded = true,
-                                          status = "$label (上限 ${tokenCap}帧)",
+                                          status = statusText,
+                                          overallProgress = overall,
                                           synthesisFrames = baseFrames + frames,
                                           maxAudioTokens = maxTokens.coerceAtMost(tokenCap),
+                                      )
+                                  }
+                                  if (pct != lastNotifPct && (pct - lastNotifPct >= 3 || pct == 98)) {
+                                      lastNotifPct = pct
+                                      com.qwen.tts.android.data.TtsForegroundService.update(
+                                          getApplication(),
+                                          pct,
+                                          "$label · 切到后台也会继续生成",
                                       )
                                   }
                               }
                               val nativeResult = native.synthesize(
                                   text = piece,
-                                  speakerEmbeddingPath = selectedVoice?.speakerEmbeddingPath,
+                                  speakerEmbeddingPath = activeEmbeddingPath,
                                   params = __NATIVE_PARAMS_EXPR__,
                               )
+                              if (synthCancelled) throw kotlinx.coroutines.CancellationException("用户取消生成")
                               if (!nativeResult.success || nativeResult.audio == null) {
-                                  error(nativeResult.errorMsg ?: "$label synthesis failed")
+                                  error(nativeResult.errorMsg ?: "$label 生成失败")
                               }
                               sampleRate = nativeResult.sampleRate.takeIf { it > 0 } ?: sampleRate
                               totalMs += nativeResult.timeMs
@@ -435,18 +781,18 @@ jobs:
 
                           try {
                               for (idx in chunks.indices) {
+                                  if (synthCancelled) throw kotlinx.coroutines.CancellationException("用户取消生成")
                                   val chunkText = chunks[idx]
                                   val label = "第 ${idx + 1}/${chunks.size} 段"
                                   val tokenCap = computeSafeMaxAudioTokens(chunkText)
-                                  val (audio, usedFrames) = synthOnePiece(chunkText, label, 1.12f)
-                                  // Anti-runaway guard: if model hit the token ceiling without EOS and chunk is splittable, split in half and retry once
-                                  if (usedFrames >= tokenCap - 3 && chunkText.length > 14) {
+                                  val (audio, usedFrames) = synthOnePiece(chunkText, idx, chunks.size, label, 1.12f)
+                                  if (usedFrames >= tokenCap - 3 && chunkText.length > 14 && !synthCancelled) {
                                       val mid = chunkText.length / 2
                                       val part1 = chunkText.substring(0, mid).trim()
                                       val part2 = chunkText.substring(mid).trim()
                                       if (part1.isNotEmpty() && part2.isNotEmpty()) {
-                                          val (a1, _) = synthOnePiece(part1, "$label-重试A", 1.18f)
-                                          val (a2, _) = synthOnePiece(part2, "$label-重试B", 1.18f)
+                                          val (a1, _) = synthOnePiece(part1, idx, chunks.size, "$label-重试A", 1.18f)
+                                          val (a2, _) = synthOnePiece(part2, idx, chunks.size, "$label-重试B", 1.18f)
                                           val combined = mergeAudioChunksSmoothly(listOf(a1, a2), sampleRate)
                                           completedFrames += (combined.size.toDouble() / sampleRate.toDouble() / 0.08).toInt()
                                           allChunks.add(combined)
@@ -455,6 +801,8 @@ jobs:
                                   }
                                   completedFrames += (audio.size.toDouble() / sampleRate.toDouble() / 0.08).toInt()
                                   allChunks.add(audio)
+                                  val doneOverall = ((idx + 1).toFloat() / chunks.size.toFloat()).coerceIn(0.05f, 0.99f)
+                                  _uiState.update { it.copy(overallProgress = doneOverall) }
                               }
                           } finally {
                               _uiState.update {
@@ -466,15 +814,19 @@ jobs:
                       }
                   }
 
+                  com.qwen.tts.android.data.TtsForegroundService.stop(getApplication())
+
                   result.fold(
                       onSuccess = { (mergedAudio, sampleRate, totalMs) ->
                           stopBusyTicker()
                           generatedAudio = mergedAudio
-                          val voiceName = selectedVoice?.name ?: "Default Voice"
+                          val voiceName = selectedVoice?.name ?: "默认音色"
                           persistGeneratedAudio(text, mergedAudio, sampleRate, voiceName, selectedVoice?.voiceId, totalMs)
                           _uiState.update {
                               it.copy(
                                   busy = false,
+                                  synthesizing = false,
+                                  overallProgress = 1f,
                                   loaded = true,
                                   status = "生成完成 (共 ${chunks.size} 段)",
                                   sampleRate = sampleRate,
@@ -489,12 +841,26 @@ jobs:
                       },
                       onFailure = { throwable ->
                           stopBusyTicker()
-                          _uiState.update {
-                              it.copy(
-                                  busy = false,
-                                  status = "Synthesis failed",
-                                  error = throwable.message ?: "Synthesis failed",
-                              )
+                          if (synthCancelled || throwable is kotlinx.coroutines.CancellationException) {
+                              _uiState.update {
+                                  it.copy(
+                                      busy = false,
+                                      synthesizing = false,
+                                      overallProgress = 0f,
+                                      status = "已取消生成",
+                                      error = null,
+                                  )
+                              }
+                          } else {
+                              _uiState.update {
+                                  it.copy(
+                                      busy = false,
+                                      synthesizing = false,
+                                      overallProgress = 0f,
+                                      status = "生成失败",
+                                      error = throwable.message ?: "生成失败",
+                                  )
+                              }
                           }
                       },
                   )
@@ -513,7 +879,6 @@ jobs:
                       other++
                   }
               }
-              // 12.5 Hz codec (~3.5 frames/CJK char normal). Cap at ~6 frames/CJK char + 48 buffer to prevent infinite EOS runaway.
               val est = (cjk * 6) + (other * 1.6).toInt() + 48
               return est.coerceIn(72, 220)
           }
@@ -637,6 +1002,7 @@ jobs:
           """.replace("__NATIVE_PARAMS_EXPR__", native_params_expr)
           s = s[:synth_start] + new_synth + "\n\n" + s[synth_end:]
 
+          # 2g. Streaming playAudio()
           play_start = s.index("    fun playAudio(historyGenerationId: Long? = null) {")
           play_end = s.index("    fun stopAudio() {")
           new_play = """    fun playAudio(historyGenerationId: Long? = null) {
@@ -691,6 +1057,65 @@ jobs:
           """
           s = s[:play_start] + new_play + "\n\n" + s[play_end:]
 
+          # 2h. Inject visual progress bar + cancel button in StudioScreen right above Generate button
+          gen_btn_anchor = "            onClick = viewModel::synthesize,"
+          if gen_btn_anchor in s:
+              idx_btn = s.index(gen_btn_anchor)
+              btn_start = s.rfind("        Button(", 0, idx_btn)
+              if btn_start != -1:
+                  progress_card = """        if (state.synthesizing) {
+                      ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                          Column(
+                              modifier = Modifier.padding(14.dp),
+                              verticalArrangement = Arrangement.spacedBy(8.dp),
+                          ) {
+                              Row(
+                                  modifier = Modifier.fillMaxWidth(),
+                                  horizontalArrangement = Arrangement.SpaceBetween,
+                                  verticalAlignment = Alignment.CenterVertically,
+                              ) {
+                                  Text(
+                                      text = state.status,
+                                      style = MaterialTheme.typography.titleSmall,
+                                      fontWeight = FontWeight.SemiBold,
+                                  )
+                                  Text(
+                                      text = "${(state.overallProgress * 100f).toInt().coerceIn(0, 100)}%",
+                                      style = MaterialTheme.typography.titleSmall,
+                                      color = MaterialTheme.colorScheme.primary,
+                                      fontWeight = FontWeight.Bold,
+                                  )
+                              }
+                              LinearProgressIndicator(
+                                  progress = { state.overallProgress.coerceIn(0f, 1f) },
+                                  modifier = Modifier.fillMaxWidth().height(8.dp),
+                              )
+                              Row(
+                                  modifier = Modifier.fillMaxWidth(),
+                                  horizontalArrangement = Arrangement.SpaceBetween,
+                                  verticalAlignment = Alignment.CenterVertically,
+                              ) {
+                                  Text(
+                                      text = "已开启后台保活，可切出使用其他应用",
+                                      style = MaterialTheme.typography.bodySmall,
+                                      color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                  )
+                                  OutlinedButton(
+                                      onClick = viewModel::cancelSynthesis,
+                                      contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                                  ) {
+                                      Text("停止生成")
+                                  }
+                              }
+                          }
+                      }
+                  }
+
+          """
+                  s = s[:btn_start] + progress_card + s[btn_start:]
+                  print("Injected visual progress bar + cancel button into StudioScreen!")
+
+          # 2i. Voice import from local audio/video
           a1 = "    fun cancelVoiceRecording() {\n        recorder.cancel()\n    }"
           a2 = "        if (granted) viewModel.startVoiceRecording()\n    }"
           a3 = "                if (state.supportsCloning == false) {"
@@ -700,9 +1125,9 @@ jobs:
 
           fun importVoiceFromUri(uri: android.net.Uri, name: String) {
               if (_uiState.value.busy || recorderState.value.isRecording) return
-              val trimmedName = name.trim().ifBlank { "Voice ${voices.value.size + 1}" }
+              val trimmedName = name.trim().ifBlank { "音色 ${voices.value.size + 1}" }
               viewModelScope.launch {
-                  startBusy(status = "Importing audio & creating voice")
+                  startBusy(status = "正在导入音频并提取声纹...")
                   val created = runCatching {
                       withContext(Dispatchers.IO) {
                           val pendingFile = File(voiceDir, "import-${System.currentTimeMillis()}.wav")
@@ -715,16 +1140,17 @@ jobs:
                           val caps = native.getModelCapabilities()
                           if (caps?.supportsCloning == false) {
                               runCatching { result.file.delete() }
-                              error("The loaded model does not expose a speaker encoder.")
+                              error("当前加载的模型不支持声音克隆。")
                           }
                           val voiceId = "voice-${System.currentTimeMillis()}"
                           val targetDir = File(voiceDir, voiceId).apply { mkdirs() }
                           val reference = File(targetDir, "reference.wav")
                           result.file.copyTo(reference, overwrite = true)
                           runCatching { result.file.delete() }
-                          val embedding = File(targetDir, "speaker.json")
+                          val sizeTag = if (selectedVariant().id.contains("1.7b")) "1.7b" else "0.6b"
+                          val embedding = File(targetDir, "speaker_${sizeTag}.json")
                           if (!native.extractSpeakerEmbedding(reference.absolutePath, embedding.absolutePath)) {
-                              error(native.getLastError() ?: "Speaker embedding extraction failed")
+                              error(native.getLastError() ?: "声纹特征提取失败")
                           }
                           VoiceProfileEntity(
                               voiceId = voiceId,
@@ -740,13 +1166,13 @@ jobs:
                           dao.insertVoice(voice)
                           stopBusyTicker()
                           _uiState.update {
-                              it.copy(busy = false, selectedVoiceId = voice.voiceId, status = "Voice imported", error = null)
+                              it.copy(busy = false, selectedVoiceId = voice.voiceId, status = "音色导入成功", error = null)
                           }
                       },
                       onFailure = { throwable ->
                           stopBusyTicker()
                           _uiState.update {
-                              it.copy(busy = false, status = "Voice import failed", error = throwable.message ?: "Voice import failed")
+                              it.copy(busy = false, status = "音色导入失败", error = throwable.message ?: "音色导入失败")
                           }
                       },
                   )
@@ -774,22 +1200,75 @@ jobs:
           s = s.replace(a2, a2 + launcher_code, 1)
           s = s.replace(a3, btn_code + a3, 1)
 
-          p.write_text(s, encoding="utf-8")
-          print("ALL PATCHES APPLIED TO MainActivity.kt SUCCESSFULLY!")
-          PY
+          # 2j. Complete Chinese UI Localization (verified against screenshots 6033/6034/6036)
+          ui_zh_map = [
+              ('Text("Text to speech"', 'Text("文本转语音"'),
+              ('label = { Text("Studio") }', 'label = { Text("合成") }'),
+              ('label = { Text("Voices") }', 'label = { Text("音色") }'),
+              ('label = { Text("History") }', 'label = { Text("历史") }'),
+              ('label = { Text("Settings") }', 'label = { Text("设置") }'),
+              ('Text("Studio")', 'Text("合成")'),
+              ('Text("Voices")', 'Text("音色")'),
+              ('Text("History")', 'Text("历史")'),
+              ('Text("Settings")', 'Text("设置")'),
+              ('label = "Studio"', 'label = "合成"'),
+              ('label = "Voices"', 'label = "音色"'),
+              ('label = "History"', 'label = "历史"'),
+              ('label = "Settings"', 'label = "设置"'),
+              ('Text("Text")', 'Text("输入文本")'),
+              ('Text("Voice")', 'Text("当前音色")'),
+              ('Text("Language")', 'Text("合成语言")'),
+              ('Text("Default Voice")', 'Text("默认音色")'),
+              ('"Default Voice"', '"默认音色"'),
+              ('Text("Generate")', 'Text("开始生成")'),
+              ('Text("Generating...")', 'Text("生成中...")'),
+              ('"Generating..."', '"生成中..."'),
+              ('"Generate"', '"开始生成"'),
+              ('Text("Performance")', 'Text("性能设置")'),
+              ('Text("CPU backend")', 'Text("CPU 推理引擎")'),
+              ('"$threads threads"', '"${threads} 线程"'),
+              ('Text("Model ready")', 'Text("模型已就绪")'),
+              ('"Model ready"', '"模型已就绪"'),
+              ('Text("Download model")', 'Text("下载模型")'),
+              ('"Download model"', '"下载模型"'),
+              ('Text("Downloading...")', 'Text("下载中...")'),
+              ('Text("Loaded")', 'Text("已加载")'),
+              ('"Loaded"', '"已加载"'),
+              ('Text("Load model")', 'Text("加载模型")'),
+              ('"Load model"', '"加载模型"'),
+              ('Text("Load")', 'Text("加载模型")'),
+              ('"Load"', '"加载模型"'),
+              ('Text("Loading...")', 'Text("加载中...")'),
+              ('Text("Ready")', 'Text("已就绪")'),
+              ('"Ready"', '"已就绪"'),
+              ('Text("Missing")', 'Text("未下载")'),
+              ('"Missing"', '"未下载"'),
+              ('"Model not downloaded"', '"未下载模型"'),
+              ('"Not downloaded"', '"未下载"'),
+              ('Text("Not downloaded")', 'Text("未下载")'),
+              ('model package"', '模型包"'),
+              ('Text("Play")', 'Text("播放")'),
+              ('Text("Stop")', 'Text("停止")'),
+              ('Text("Export WAV")', 'Text("导出 WAV")'),
+              ('Text("Delete")', 'Text("删除")'),
+              ('Text("Cancel")', 'Text("取消")'),
+              ('Text("Save")', 'Text("保存")'),
+              ('Text("Voice name")', 'Text("音色名称")'),
+              ('Text("Record voice")', 'Text("录制人声")'),
+              ('Text("Stop recording")', 'Text("停止录制")'),
+              ('Text("Start recording")', 'Text("开始录音")'),
+              ('Text("Select voice")', 'Text("选择音色")'),
+              ('Text("No history yet")', 'Text("暂无生成记录")'),
+              ('Text("No voices yet")', 'Text("暂无自定义音色")'),
+              ('"Elapsed ', '"已用时 '),
+              ('"Audio so far ~', '"已生成音频 ~'),
+          ]
+          for old_str, new_str in ui_zh_map:
+              s = s.replace(old_str, new_str)
 
-      - name: Resolve release version
-        run: |
-          version="${{ inputs.version }}"
-          if [ -z "$version" ]; then
-            if [ "${{ github.ref_type }}" = "tag" ]; then
-              version="${{ github.ref_name }}"
-            else
-              version="0.1.${{ github.run_number }}"
-            fi
-          fi
-          release_version="${version#v}"
-          echo "RELEASE_VERSION=$release_version" >> "$GITHUB_ENV"
+          p.write_text(s, encoding="utf-8")
+          print("ALL PATCHES APPLIED SUCCESSFULLY!")
+          PY
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -814,22 +1293,24 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build Turbo Unlimited APK
+      - name: Build Turbo Unlimited CN APK
         run: |
           chmod +x ./gradlew
           ./gradlew :app:assembleDebug
 
-      - name: Collect APK
+      - name: Verify Fixed APK Signature & Collect APK
         run: |
+          SDK_DIR="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          "$SDK_DIR/build-tools/36.0.0/apksigner" verify --print-certs app/build/outputs/apk/debug/app-debug.apk
           mkdir -p artifacts
           cp app/build/outputs/apk/debug/app-debug.apk \
-            "artifacts/qwen3-tts-android-${RELEASE_VERSION}-arm64-v8a-unlimited.apk"
+            "artifacts/qwen3-tts-android-${RELEASE_VERSION}-arm64-v8a-cn-v2.apk"
           ls -lh artifacts
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: qwen3-tts-android-${{ env.RELEASE_VERSION }}-unlimited
+          name: qwen3-tts-android-${{ env.RELEASE_VERSION }}-cn-v2
           path: artifacts/*.apk
 
       - name: Publish GitHub release
@@ -837,8 +1318,8 @@ jobs:
         with:
           tag_name: v${{ env.RELEASE_VERSION }}
           target_commitish: ${{ github.sha }}
-          name: Qwen3 TTS Android ${{ env.RELEASE_VERSION }} Unlimited
+          name: Qwen3 TTS Android ${{ env.RELEASE_VERSION }} 中文旗舰版
           body: |
-            Snapdragon 8 Elite turbo build with permanent signing key, anti-runaway 32-char CJK chunking + dynamic maxAudioTokens cap, streaming playback, 0.6B Q8 / 1.7B Q4 model selector, and local audio/video voice import.
+            Chinese UI, auto 0.6B/1.7B speaker embedding adapter, background ForegroundService keep-alive, visual progress bar + cancel button, 6 official Qwen3-TTS GGUF models, locked Gradle permanent signing key + auto versionCode bump, and anti-runaway 32-char chunking.
           prerelease: ${{ github.event_name == 'workflow_dispatch' && inputs.prerelease || false }}
           files: artifacts/*.apk
